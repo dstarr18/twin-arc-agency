@@ -1,5 +1,14 @@
 // Twin Arc Preview loader: approved V11 source + cloud persistence patch.
 (function(){
+  // Event cards use a small isolated stylesheet so text length never changes card size.
+  if(!document.querySelector('link[data-twin-arc-event-uniform]')){
+    const css=document.createElement('link');
+    css.rel='stylesheet';
+    css.href='css/event-card-uniform.css';
+    css.setAttribute('data-twin-arc-event-uniform','true');
+    document.head.appendChild(css);
+  }
+
   // Install this BEFORE core V11 starts its first Supabase request. The host table
   // can contain large base64 photos; never let the browser cache of those photos
   // fill localStorage and break owner sessions or later Save Host actions.
