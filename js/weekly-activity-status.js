@@ -1,12 +1,28 @@
-// Twin Arc weekly activity status patch.
+// Twin Arc weekly activity status + stable weekly record grouping patch.
 // Keeps the host's main profile status separate from each week's activity status.
+// Weekly records stay grouped under the selected dashboard Month / Year so adding Week 2 never hides Week 1.
 (function(){
   const STATUS_FIELD='activity_status';
   const originalFetch=window.fetch.bind(window);
 
+  function dashboardMonth(){
+    const perf=document.getElementById('perfMonth')?.value?.trim();
+    if(perf)return perf;
+    if(typeof getHostData==='function')return (getHostData().month||'').trim();
+    return '';
+  }
+
   function ensureEditorField(){
     const form=document.getElementById('weeklyRecordForm');
-    if(!form||document.getElementById('weeklyActivityStatus'))return;
+    if(!form)return;
+    const weeklyMonth=document.getElementById('weeklyMonth');
+    if(weeklyMonth){
+      weeklyMonth.readOnly=true;
+      weeklyMonth.title='This follows the Month / Year selected on the dashboard.';
+      const label=weeklyMonth.closest('label');
+      if(label&&label.firstChild)label.firstChild.textContent='Dashboard Month / Year';
+    }
+    if(document.getElementById('weeklyActivityStatus'))return;
     const grid=form.querySelector('.manager-grid');
     if(!grid)return;
     const label=document.createElement('label');
@@ -21,7 +37,7 @@
     return key?getHostData().records?.[key]:null;
   }
 
-  // Add activity_status to weekly saves without changing the approved core dashboard logic.
+  // Add activity status and always save into the dashboard's selected month group.
   window.fetch=async function(input,init){
     try{
       const url=typeof input==='string'?input:(input?.url||'');
@@ -29,9 +45,11 @@
         const payload=JSON.parse(init.body);
         const select=document.getElementById('weeklyActivityStatus');
         payload[STATUS_FIELD]=select?.value==='Inactive'?'Inactive':'Active';
+        const month=dashboardMonth();
+        if(month)payload.month_year=month;
         init={...init,body:JSON.stringify(payload)};
       }
-    }catch(err){console.warn('[Twin Arc] Weekly activity save patch skipped.',err);}
+    }catch(err){console.warn('[Twin Arc] Weekly save patch skipped.',err);}
     return originalFetch(input,init);
   };
 
@@ -55,6 +73,9 @@
     openWeekEditor=function(i){
       originalOpenWeekEditor(i);
       ensureEditorField();
+      const month=dashboardMonth();
+      const monthInput=document.getElementById('weeklyMonth');
+      if(monthInput&&month)monthInput.value=month;
       const select=document.getElementById('weeklyActivityStatus');
       const r=currentRecord();
       if(select)select.value=r?.activityStatus==='Inactive'?'Inactive':'Active';
@@ -94,6 +115,9 @@
   if(form)form.addEventListener('submit',()=>{
     const key=document.getElementById('perfWeek')?.value;
     const select=document.getElementById('weeklyActivityStatus');
+    const month=dashboardMonth();
+    const monthInput=document.getElementById('weeklyMonth');
+    if(monthInput&&month)monthInput.value=month;
     if(key&&select&&typeof getHostData==='function'){
       const r=getHostData().records?.[key];
       if(r)r.activityStatus=select.value;
