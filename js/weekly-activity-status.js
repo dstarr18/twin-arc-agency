@@ -1,6 +1,6 @@
 // Twin Arc weekly activity status + stable weekly record grouping patch.
 // Keeps the host's main profile status separate from each week's activity status.
-// Weekly records stay grouped under the selected dashboard Month / Year so adding Week 2 never hides Week 1.
+// Month / Year is a free-form grouping label, so ranges such as "Oct-Nov 2026" are supported.
 (function(){
   const STATUS_FIELD='activity_status';
   const originalFetch=window.fetch.bind(window);
@@ -17,11 +17,27 @@
     if(!form)return;
     const weeklyMonth=document.getElementById('weeklyMonth');
     if(weeklyMonth){
-      weeklyMonth.readOnly=true;
-      weeklyMonth.title='This follows the Month / Year selected on the dashboard.';
+      // This field is the actual cloud grouping key. Keep it editable so the owner
+      // can type a single month or a range such as Oct-Nov 2026.
+      weeklyMonth.readOnly=false;
+      weeklyMonth.placeholder='e.g. Oct-Nov 2026';
+      weeklyMonth.title='Enter the dashboard month/year or month range, e.g. Oct-Nov 2026.';
       const label=weeklyMonth.closest('label');
       if(label&&label.firstChild)label.firstChild.textContent='Dashboard Month / Year';
+      weeklyMonth.addEventListener('input',()=>{
+        const perfMonth=document.getElementById('perfMonth');
+        if(perfMonth)perfMonth.value=weeklyMonth.value;
+        if(typeof getHostData==='function')getHostData().month=weeklyMonth.value.trim();
+      });
     }
+    ['weeklyCoins','weeklyDays','weeklyHours'].forEach(id=>{
+      const el=document.getElementById(id);
+      if(!el)return;
+      // Number inputs reject "-". Text + numeric inputMode accepts either a number or dash.
+      el.type='text';
+      el.inputMode='decimal';
+      el.placeholder='0 or -';
+    });
     if(document.getElementById('weeklyActivityStatus'))return;
     const grid=form.querySelector('.manager-grid');
     if(!grid)return;
@@ -37,7 +53,13 @@
     return key?getHostData().records?.[key]:null;
   }
 
-  // Add activity status and always save into the dashboard's selected month group.
+  function dashOrNumber(value){
+    const v=String(value??'').trim();
+    return v==='-'?'-':Number(v||0);
+  }
+
+  // Add activity status, use the editable month/range as the grouping key,
+  // and preserve a literal dash in the local display for no-quota fields.
   window.fetch=async function(input,init){
     try{
       const url=typeof input==='string'?input:(input?.url||'');
@@ -45,8 +67,11 @@
         const payload=JSON.parse(init.body);
         const select=document.getElementById('weeklyActivityStatus');
         payload[STATUS_FIELD]=select?.value==='Inactive'?'Inactive':'Active';
-        const month=dashboardMonth();
+        const typedMonth=document.getElementById('weeklyMonth')?.value?.trim();
+        const month=typedMonth||dashboardMonth();
         if(month)payload.month_year=month;
+        // DB numeric columns stay numeric. A dash means no quota / zero in storage.
+        ['coins_received','streaming_days','streaming_hours'].forEach(k=>{if(payload[k]==='-'||Number.isNaN(payload[k]))payload[k]=0;});
         init={...init,body:JSON.stringify(payload)};
       }
     }catch(err){console.warn('[Twin Arc] Weekly save patch skipped.',err);}
@@ -75,7 +100,7 @@
       ensureEditorField();
       const month=dashboardMonth();
       const monthInput=document.getElementById('weeklyMonth');
-      if(monthInput&&month)monthInput.value=month;
+      if(monthInput&&!monthInput.value&&month)monthInput.value=month;
       const select=document.getElementById('weeklyActivityStatus');
       const r=currentRecord();
       if(select)select.value=r?.activityStatus==='Inactive'?'Inactive':'Active';
@@ -115,12 +140,19 @@
   if(form)form.addEventListener('submit',()=>{
     const key=document.getElementById('perfWeek')?.value;
     const select=document.getElementById('weeklyActivityStatus');
-    const month=dashboardMonth();
     const monthInput=document.getElementById('weeklyMonth');
-    if(monthInput&&month)monthInput.value=month;
+    const typedMonth=monthInput?.value?.trim()||dashboardMonth();
+    const perfMonth=document.getElementById('perfMonth');
+    if(perfMonth&&typedMonth)perfMonth.value=typedMonth;
+    if(typeof getHostData==='function'&&typedMonth)getHostData().month=typedMonth;
     if(key&&select&&typeof getHostData==='function'){
       const r=getHostData().records?.[key];
-      if(r)r.activityStatus=select.value;
+      if(r){
+        r.activityStatus=select.value;
+        r.coins=dashOrNumber(document.getElementById('weeklyCoins')?.value);
+        r.days=dashOrNumber(document.getElementById('weeklyDays')?.value);
+        r.hours=dashOrNumber(document.getElementById('weeklyHours')?.value);
+      }
     }
   },true);
 })();
