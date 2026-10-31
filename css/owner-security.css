@@ -1,13 +1,19 @@
 /* Twin Arc owner UI security lock.
-   Management controls are hidden by default and become visible only when
-   the verified Owner Mode button has the is-unlocked state. */
-.host-actions,
+   Public visitors may open each host's read-only Dashboard.
+   All management/edit controls remain hidden until verified Owner Mode. */
+.host-actions{
+  display:grid!important;
+}
+.host-actions .mini-btn:not(.dashboard-btn),
 .event-actions,
 #addHostBtn,
 #addEventBtn,
 .sheet-toolbar,
 #weeklyRecordForm{
   display:none!important;
+}
+.host-actions .dashboard-btn{
+  display:inline-flex!important;
 }
 .manual-week-header{
   pointer-events:none!important;
@@ -16,8 +22,8 @@
   cursor:default!important;
 }
 
-body:has(#adminModeBtn.is-unlocked) .host-actions{
-  display:grid!important;
+body:has(#adminModeBtn.is-unlocked) .host-actions .mini-btn{
+  display:inline-flex!important;
 }
 body:has(#adminModeBtn.is-unlocked) .event-actions{
   display:grid!important;
