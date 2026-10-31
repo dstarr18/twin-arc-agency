@@ -22,8 +22,22 @@
     btn.textContent=text||'Save Host';
   }
 
-  // Safety: every time the editor opens, make sure an earlier network request
-  // can never leave the shared Save Host button disabled for the next host.
+  // Host photos can be large data URLs. Supabase is the source of truth, so a
+  // browser localStorage quota failure must never block or undo a cloud save.
+  function safeLocalHostCache(){
+    try{
+      const compact=hosts.map(h=>({...h,photo:(typeof h.photo==='string'&&h.photo.startsWith('data:'))?'':h.photo}));
+      localStorage.setItem('twinArcHosts',JSON.stringify(compact));
+    }catch(err){
+      console.warn('[Twin Arc] Local host cache skipped; Supabase remains authoritative.',err);
+      try{localStorage.removeItem('twinArcHosts');}catch(_){ }
+    }
+  }
+
+  // Replace the legacy cache writer so cloud-loaded photos cannot overflow
+  // localStorage after several edits/uploads.
+  try{saveHosts=safeLocalHostCache;}catch(_){ }
+
   const managerObserver=new MutationObserver(()=>{
     if(!hostManager.hidden){
       const btn=hostManager.querySelector('button[type="submit"]');
@@ -95,16 +109,13 @@
       if(saved?.id) record.id=saved.id; else if(old.id) record.id=old.id;
 
       if(editing) hosts[Number(idx)]=record; else hosts.push(record);
-      saveHosts();renderHosts();
+      safeLocalHostCache();
+      renderHosts();
 
-      // IMPORTANT: release the button BEFORE refreshing cloud data. The old patch
-      // awaited loadHostsFromSupabase(), so one slow reload could leave Save Host
-      // disabled when the owner opened the next host.
       if(saveBtn){saveBtn.dataset.saving='0';restoreSaveButton(saveBtn,originalText);}
       hostManager.hidden=true;
       resetManager();
 
-      // Background refresh only; saving the next host never waits on this request.
       Promise.race([
         loadHostsFromSupabase(),
         new Promise(resolve=>setTimeout(resolve,10000))
