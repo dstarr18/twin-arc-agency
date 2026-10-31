@@ -1,4 +1,6 @@
-// Twin Arc Preview loader: approved V11 source + cloud persistence patches.
+// Twin Arc Preview loader: approved V11 source + cloud host persistence patch.
+// Events intentionally remain on the original local-browser manager until the
+// existing desktop event data has been safely migrated to Supabase.
 (function(){
   // Event cards use a small isolated stylesheet so text length never changes card size.
   if(!document.querySelector('link[data-twin-arc-event-uniform]')){
@@ -52,5 +54,5 @@
   }
 
   function load(src,next){const s=document.createElement('script');s.src=src;s.onload=()=>next&&next();s.onerror=()=>console.error('[Twin Arc] Failed to load',src);document.head.appendChild(s);}
-  load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',()=>{installCloudDelete();load('js/cloud-events.js');}));
+  load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',installCloudDelete));
 })();
