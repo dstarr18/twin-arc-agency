@@ -1,5 +1,5 @@
 // Twin Arc Events — Supabase cloud sync overlay
-// Keeps the existing event UI/design while making event data shared across devices.
+// Preserves the approved event-card UI while using Supabase as the shared source of truth.
 (function(){
   const LOCAL_EVENT_KEY='twinArcEventsV9';
   const grid=document.getElementById('eventGrid');
@@ -8,7 +8,7 @@
 
   function headers(token){return {apikey:SUPABASE_KEY,Authorization:`Bearer ${token||SUPABASE_KEY}`,'Content-Type':'application/json'};}
   function fromRow(x){return {id:x.id,title:x.title||'',date:x.event_date||'',time:x.event_time||'',status:x.status||'Upcoming',description:x.description||'',photo:x.photo_url||''};}
-  function toRow(ev,i){return {title:ev.title||'',event_date:ev.date||'',event_time:ev.time||'',status:ev.status||'Upcoming',description:ev.description||'',photo_url:ev.photo||'',sort_order:i||0,updated_at:new Date().toISOString()};}
+  function toRow(ev,i){return {title:ev.title||'',event_date:ev.date||'',event_time:ev.time||'',status:ev.status||'Upcoming',description:ev.description||'',photo_url:ev.photo||'',sort_order:Number.isFinite(Number(i))?Number(i):0,updated_at:new Date().toISOString()};}
 
   async function fetchCloudEvents(){
     const r=await fetch(`${SUPABASE_URL}/rest/v1/events?select=id,title,event_date,event_time,status,description,photo_url,sort_order&order=sort_order.asc,id.asc`,{headers:headers()});
@@ -25,45 +25,56 @@
   }
 
   async function loadCloudEvents(){
-    try{events=await fetchCloudEvents();renderCloudEvents();console.info(`[Twin Arc] Loaded ${events.length} cloud events`);}catch(err){console.error('[Twin Arc] Cloud events load failed',err);}
+    try{
+      const cloud=await fetchCloudEvents();
+      // Never blank a browser that still has the safe local backup if the cloud is unexpectedly empty.
+      if(!cloud.length){console.warn('[Twin Arc] Cloud events are empty; preserving current/local event display.');return false;}
+      events=cloud;
+      renderCloudEvents();
+      console.info(`[Twin Arc] Loaded ${events.length} cloud events`);
+      return true;
+    }catch(err){console.error('[Twin Arc] Cloud events load failed; preserving current/local events.',err);return false;}
   }
 
-  async function migrateLocalEventsIfNeeded(){
-    let local=[];try{local=JSON.parse(localStorage.getItem(LOCAL_EVENT_KEY)||'[]')||[];}catch(_){return false;}
-    if(!local.length)return false;
-    let cloud;try{cloud=await fetchCloudEvents();}catch(_){return false;}
-    if(cloud.length){localStorage.removeItem(LOCAL_EVENT_KEY);events=cloud;renderCloudEvents();return true;}
-    const token=await getOwnerAccessToken();if(!token)return false;
-    const payload=local.map((ev,i)=>toRow(ev,i));
-    const r=await fetch(`${SUPABASE_URL}/rest/v1/events`,{method:'POST',headers:{...headers(token),Prefer:'return=representation'},body:JSON.stringify(payload)});
-    if(!r.ok){console.error('[Twin Arc] Existing event migration failed',await r.text());return false;}
-    localStorage.removeItem(LOCAL_EVENT_KEY);await loadCloudEvents();console.info(`[Twin Arc] Migrated ${payload.length} existing events to Supabase`);return true;
+  async function uploadPosterIfNeeded(photo,token,eventId){
+    if(!photo||!photo.startsWith('data:image/'))return photo||'';
+    const m=photo.match(/^data:(image\/(?:jpeg|png|webp));base64,(.+)$/);
+    if(!m)throw new Error('Unsupported event poster format.');
+    const mime=m[1],ext=mime==='image/png'?'png':mime==='image/webp'?'webp':'jpg';
+    const bytes=Uint8Array.from(atob(m[2]),c=>c.charCodeAt(0));
+    const path=`events/event-${eventId||'new'}-${Date.now()}.${ext}`;
+    const r=await fetch(`${SUPABASE_URL}/storage/v1/object/event-posters/${path}`,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${token}`,'Content-Type':mime,'x-upsert':'false'},body:bytes});
+    if(!r.ok)throw new Error(`Poster upload failed (${r.status}): ${await r.text()}`);
+    return `${SUPABASE_URL}/storage/v1/object/public/event-posters/${path}`;
   }
 
   window.deleteEvent=async function(i){
     const ev=events[i];if(!ev||!confirm(`Delete ${ev.title}?`))return;
     const token=await getOwnerAccessToken();if(!token){if(typeof openAdmin==='function')openAdmin();return;}
-    if(ev.id){const r=await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${ev.id}`,{method:'DELETE',headers:headers(token)});if(!r.ok){alert('Cloud delete failed. Please sign in again.');return;}}
+    if(!ev.id){alert('This event is not linked to the cloud yet. Nothing was deleted.');return;}
+    const r=await fetch(`${SUPABASE_URL}/rest/v1/events?id=eq.${encodeURIComponent(ev.id)}`,{method:'DELETE',headers:headers(token)});
+    if(!r.ok){console.error('[Twin Arc] Cloud event delete failed',await r.text());alert('Cloud delete failed. Please try again.');return;}
     await loadCloudEvents();
   };
 
-  // Capture submit before the old local-storage handler so only the cloud save runs.
+  // Capture submit before the original local-storage handler so cloud is authoritative.
   form.addEventListener('submit',async function(e){
     e.preventDefault();e.stopImmediatePropagation();
     const token=await getOwnerAccessToken();if(!token){if(typeof openAdmin==='function')openAdmin();return;}
     const idx=document.getElementById('eventEditIndex').value;
     const old=idx!==''?events[Number(idx)]:{};
-    const ev={title:document.getElementById('eventTitle').value.trim(),date:document.getElementById('eventDate').value.trim(),time:document.getElementById('eventTime').value.trim(),status:document.getElementById('eventStatus').value,description:document.getElementById('eventDescription').value.trim(),photo:eventPhotoPreview.src||''};
-    const payload=toRow(ev,idx===''?events.length:Number(idx));
-    let url=`${SUPABASE_URL}/rest/v1/events`,method='POST';
-    if(old&&old.id){url+=`?id=eq.${old.id}`;method='PATCH';}
-    const r=await fetch(url,{method,headers:{...headers(token),Prefer:'return=representation'},body:JSON.stringify(payload)});
-    if(!r.ok){console.error('[Twin Arc] Cloud event save failed',await r.text());alert('Event cloud save failed. Please try again.');return;}
-    eventManager.hidden=true;resetEventManager();await loadCloudEvents();
+    try{
+      const poster=await uploadPosterIfNeeded(eventPhotoPreview.src||'',token,old&&old.id);
+      const ev={title:document.getElementById('eventTitle').value.trim(),date:document.getElementById('eventDate').value.trim(),time:document.getElementById('eventTime').value.trim(),status:document.getElementById('eventStatus').value,description:document.getElementById('eventDescription').value.trim(),photo:poster};
+      const payload=toRow(ev,idx===''?events.length:Number(idx));
+      let url=`${SUPABASE_URL}/rest/v1/events`,method='POST';
+      if(old&&old.id){url+=`?id=eq.${encodeURIComponent(old.id)}`;method='PATCH';}
+      const r=await fetch(url,{method,headers:{...headers(token),Prefer:'return=representation'},body:JSON.stringify(payload)});
+      if(!r.ok)throw new Error(`Event save failed (${r.status}): ${await r.text()}`);
+      eventManager.hidden=true;resetEventManager();await loadCloudEvents();
+    }catch(err){console.error('[Twin Arc] Cloud event save failed',err);alert(err.message||'Event cloud save failed. Please try again.');}
   },true);
 
-  loadCloudEvents().then(()=>migrateLocalEventsIfNeeded());
-  // If the desktop already has events but Owner Mode was not signed in on page load,
-  // retry migration after login becomes available. Stops automatically once migrated.
-  let tries=0;const migrationTimer=setInterval(async()=>{tries++;const done=await migrateLocalEventsIfNeeded();if(done||tries>=90)clearInterval(migrationTimer);},2000);
+  // The five legacy events were migrated separately and verified. Keep localStorage untouched as a safety backup.
+  loadCloudEvents();
 })();
