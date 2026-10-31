@@ -1,0 +1,40 @@
+/* Twin Arc owner UI security lock.
+   Management controls are hidden by default and become visible only when
+   the verified Owner Mode button has the is-unlocked state. */
+.host-actions,
+.event-actions,
+#addHostBtn,
+#addEventBtn,
+.sheet-toolbar,
+#weeklyRecordForm{
+  display:none!important;
+}
+.manual-week-header{
+  pointer-events:none!important;
+}
+.week-cell{
+  cursor:default!important;
+}
+
+body:has(#adminModeBtn.is-unlocked) .host-actions{
+  display:grid!important;
+}
+body:has(#adminModeBtn.is-unlocked) .event-actions{
+  display:grid!important;
+}
+body:has(#adminModeBtn.is-unlocked) #addHostBtn,
+body:has(#adminModeBtn.is-unlocked) #addEventBtn{
+  display:inline-flex!important;
+}
+body:has(#adminModeBtn.is-unlocked) .sheet-toolbar{
+  display:grid!important;
+}
+body:has(#adminModeBtn.is-unlocked) #weeklyRecordForm:not([hidden]){
+  display:block!important;
+}
+body:has(#adminModeBtn.is-unlocked) .manual-week-header{
+  pointer-events:auto!important;
+}
+body:has(#adminModeBtn.is-unlocked) .week-cell{
+  cursor:pointer!important;
+}
