@@ -44,3 +44,22 @@ body:has(#adminModeBtn.is-unlocked) .manual-week-header{
 body:has(#adminModeBtn.is-unlocked) .week-cell{
   cursor:pointer!important;
 }
+
+/* Live Highlights is injected after the page reveal observer starts.
+   Keep its heading and toolbar visible instead of leaving them opacity-hidden. */
+#live-highlights .section-heading.reveal,
+#live-highlights .highlight-toolbar.reveal{
+  opacity:1!important;
+  transform:none!important;
+  visibility:visible!important;
+}
+
+#live-highlights #addHighlightBtn{
+  display:none!important;
+}
+body:has(#adminModeBtn.is-unlocked) #live-highlights #addHighlightBtn{
+  display:inline-flex!important;
+}
+body:has(#adminModeBtn.is-unlocked) #live-highlights .highlight-actions{
+  display:block!important;
+}
