@@ -1,32 +1,16 @@
-// Twin Arc Preview loader: approved V11 source + cloud host persistence patch.
-// Events intentionally remain on the original local-browser manager until the
-// existing desktop event data has been safely migrated to Supabase.
+// Twin Arc Preview loader: approved V11 source + cloud host persistence + verified cloud events.
 (function(){
-  // Event cards use a small isolated stylesheet so text length never changes card size.
   if(!document.querySelector('link[data-twin-arc-event-uniform]')){
-    const css=document.createElement('link');
-    css.rel='stylesheet';
-    css.href='css/event-card-uniform.css';
-    css.setAttribute('data-twin-arc-event-uniform','true');
-    document.head.appendChild(css);
+    const css=document.createElement('link');css.rel='stylesheet';css.href='css/event-card-uniform.css';css.setAttribute('data-twin-arc-event-uniform','true');document.head.appendChild(css);
   }
 
-  // Install this BEFORE core V11 starts its first Supabase request. The host table
-  // can contain large base64 photos; never let the browser cache of those photos
-  // fill localStorage and break owner sessions or later Save Host actions.
   try{
     const nativeSetItem=Storage.prototype.setItem;
     if(!window.__twinArcHostCacheGuard){
       window.__twinArcHostCacheGuard=true;
       Storage.prototype.setItem=function(key,value){
         if(this===localStorage&&key==='twinArcHosts'){
-          try{
-            const parsed=JSON.parse(value);
-            if(Array.isArray(parsed)){
-              const compact=parsed.map(h=>({...h,photo:(typeof h.photo==='string'&&h.photo.startsWith('data:'))?'':h.photo}));
-              return nativeSetItem.call(this,key,JSON.stringify(compact));
-            }
-          }catch(err){console.warn('[Twin Arc] Host cache guard skipped malformed cache.',err);}
+          try{const parsed=JSON.parse(value);if(Array.isArray(parsed)){const compact=parsed.map(h=>({...h,photo:(typeof h.photo==='string'&&h.photo.startsWith('data:'))?'':h.photo}));return nativeSetItem.call(this,key,JSON.stringify(compact));}}catch(err){console.warn('[Twin Arc] Host cache guard skipped malformed cache.',err);}
         }
         return nativeSetItem.call(this,key,value);
       };
@@ -35,24 +19,16 @@
 
   function installCloudDelete(){
     window.deleteHost=async i=>{
-      const h=hosts[i];
-      if(!h||!confirm(`Remove ${h.stage} from Twin Arc Agency?`)) return;
+      const h=hosts[i];if(!h||!confirm(`Remove ${h.stage} from Twin Arc Agency?`))return;
       if(!adminUnlocked){openAdmin();if(adminStatus)adminStatus.textContent='Owner sign-in required to delete hosts.';return;}
-      const token=await getOwnerAccessToken();
-      if(!token){openAdmin();return;}
+      const token=await getOwnerAccessToken();if(!token){openAdmin();return;}
       try{
-        if(h.id){
-          const r=await fetch(`${SUPABASE_URL}/rest/v1/hosts?id=eq.${encodeURIComponent(h.id)}`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${token}`,Prefer:'return=minimal'}});
-          if(!r.ok) throw new Error(`Host delete failed (${r.status}): ${await r.text()}`);
-        }
-        hosts.splice(i,1);
-        saveHosts();
-        renderHosts();
-        await loadHostsFromSupabase();
+        if(h.id){const r=await fetch(`${SUPABASE_URL}/rest/v1/hosts?id=eq.${encodeURIComponent(h.id)}`,{method:'DELETE',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${token}`,Prefer:'return=minimal'}});if(!r.ok)throw new Error(`Host delete failed (${r.status}): ${await r.text()}`);}
+        hosts.splice(i,1);saveHosts();renderHosts();await loadHostsFromSupabase();
       }catch(err){console.error('[Twin Arc] Host cloud delete failed',err);alert(err.message||'Could not delete host. Please try again.');}
     };
   }
 
   function load(src,next){const s=document.createElement('script');s.src=src;s.onload=()=>next&&next();s.onerror=()=>console.error('[Twin Arc] Failed to load',src);document.head.appendChild(s);}
-  load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',installCloudDelete));
+  load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',()=>{installCloudDelete();load('js/cloud-events.js');}));
 })();
