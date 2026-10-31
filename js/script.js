@@ -1,4 +1,4 @@
-// Twin Arc Preview loader: approved V11 source + cloud persistence patch.
+// Twin Arc Preview loader: approved V11 source + cloud persistence patches.
 (function(){
   // Event cards use a small isolated stylesheet so text length never changes card size.
   if(!document.querySelector('link[data-twin-arc-event-uniform]')){
@@ -52,5 +52,5 @@
   }
 
   function load(src,next){const s=document.createElement('script');s.src=src;s.onload=()=>next&&next();s.onerror=()=>console.error('[Twin Arc] Failed to load',src);document.head.appendChild(s);}
-  load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',installCloudDelete));
+  load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',()=>{installCloudDelete();load('js/cloud-events.js');}));
 })();
