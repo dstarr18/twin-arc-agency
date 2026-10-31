@@ -10,6 +10,28 @@
 
   if(typeof hostManager==='undefined'||!hostManager) return;
 
+  // Core V11 starts its Supabase load before this patch runs. Intercept only the
+  // twinArcHosts cache write so large base64 photos can never make that successful
+  // cloud load fall into the old one-host localStorage fallback.
+  try{
+    const nativeSetItem=Storage.prototype.setItem;
+    if(!window.__twinArcHostCacheGuard){
+      window.__twinArcHostCacheGuard=true;
+      Storage.prototype.setItem=function(key,value){
+        if(this===localStorage&&key==='twinArcHosts'){
+          try{
+            const parsed=JSON.parse(value);
+            if(Array.isArray(parsed)){
+              const compact=parsed.map(h=>({...h,photo:(typeof h.photo==='string'&&h.photo.startsWith('data:'))?'':h.photo}));
+              return nativeSetItem.call(this,key,JSON.stringify(compact));
+            }
+          }catch(err){console.warn('[Twin Arc] Host cache guard skipped malformed cache.',err);}
+        }
+        return nativeSetItem.call(this,key,value);
+      };
+    }
+  }catch(err){console.warn('[Twin Arc] Could not install host cache guard.',err);}
+
   const withTimeout=(promise,ms,message)=>Promise.race([
     promise,
     new Promise((_,reject)=>setTimeout(()=>reject(new Error(message||'Request timed out. Please try again.')),ms))
@@ -22,8 +44,6 @@
     btn.textContent=text||'Save Host';
   }
 
-  // Host photos can be large data URLs. Supabase is the source of truth, so a
-  // browser localStorage quota failure must never block or undo a cloud save.
   function safeLocalHostCache(){
     try{
       const compact=hosts.map(h=>({...h,photo:(typeof h.photo==='string'&&h.photo.startsWith('data:'))?'':h.photo}));
@@ -34,8 +54,6 @@
     }
   }
 
-  // Replace the legacy cache writer so cloud-loaded photos cannot overflow
-  // localStorage after several edits/uploads.
   try{saveHosts=safeLocalHostCache;}catch(_){ }
 
   const managerObserver=new MutationObserver(()=>{
