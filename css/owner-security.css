@@ -63,3 +63,8 @@ body:has(#adminModeBtn.is-unlocked) #live-highlights #addHighlightBtn{
 body:has(#adminModeBtn.is-unlocked) #live-highlights .highlight-actions{
   display:block!important;
 }
+
+/* Owner Access: keep Sign Out label clearly readable. */
+.admin-unlocked-actions .btn{
+  color:#fff!important;
+}
