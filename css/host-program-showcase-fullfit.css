@@ -20,6 +20,7 @@
   display:flex!important;
   flex-direction:column!important;
   margin:0!important;
+  position:relative!important;
 }
 
 .program-top-media{
@@ -75,6 +76,33 @@
   white-space:nowrap!important;
   overflow:hidden!important;
   text-overflow:ellipsis!important;
+}
+
+/* Keep Edit Top Hosts visible in Owner Mode without enlarging public card. */
+.program-top-card .program-card-actions{
+  position:absolute!important;
+  left:14px!important;
+  right:14px!important;
+  bottom:10px!important;
+  z-index:8!important;
+  margin:0!important;
+  gap:8px!important;
+}
+body.site-owner-unlocked .program-top-copy,
+body:has(#adminModeBtn.is-unlocked) .program-top-copy{
+  padding-bottom:52px!important;
+  flex-basis:132px!important;
+  height:132px!important;
+  min-height:132px!important;
+  max-height:132px!important;
+}
+body.site-owner-unlocked .program-top-card .program-card-actions,
+body:has(#adminModeBtn.is-unlocked) .program-top-card .program-card-actions{
+  display:flex!important;
+}
+.program-top-card .program-card-actions .mini-btn{
+  width:100%!important;
+  min-height:34px!important;
 }
 
 /* Announcement panel: fixed grid so cards never overlap. */
@@ -207,6 +235,15 @@
     max-height:90px!important;
   }
 
+  body.site-owner-unlocked .program-top-copy,
+  body:has(#adminModeBtn.is-unlocked) .program-top-copy{
+    flex-basis:126px!important;
+    height:126px!important;
+    min-height:126px!important;
+    max-height:126px!important;
+    padding-bottom:50px!important;
+  }
+
   .program-announcement-grid{
     flex:0 0 412px!important;
     height:412px!important;
@@ -253,6 +290,12 @@
     min-height:590px!important;
     max-height:590px!important;
     padding:12px!important;
+  }
+
+  .program-top-card .program-card-actions{
+    left:12px!important;
+    right:12px!important;
+    bottom:9px!important;
   }
 
   .program-notes-box{
