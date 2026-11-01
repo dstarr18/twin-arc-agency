@@ -36,6 +36,16 @@
   filter:drop-shadow(0 0 10px rgba(126,41,255,.42));
 }
 
+/* Host Program: keep each small Announcement card a true square. */
+.program-announcement-grid{
+  grid-template-rows:none!important;
+  align-content:start!important;
+}
+.program-announcement-card{
+  aspect-ratio:1 / 1!important;
+  min-height:0!important;
+}
+
 @media(max-width:700px){
   .brand-copy{min-width:105px;}
   .brand-copy .brand-main{font-size:13px!important;}
