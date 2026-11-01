@@ -8,7 +8,7 @@
   }
   // Host Program owner-card preview: full square photo + lower-third branding strip.
   if(!document.querySelector('link[data-twin-arc-owner-card-square]')){
-    const ownerCardCss=document.createElement('link');ownerCardCss.rel='stylesheet';ownerCardCss.href='css/owner-card-square-preview.css?v=20261101c';ownerCardCss.setAttribute('data-twin-arc-owner-card-square','true');document.head.appendChild(ownerCardCss);
+    const ownerCardCss=document.createElement('link');ownerCardCss.rel='stylesheet';ownerCardCss.href='css/owner-card-square-preview.css?v=20261101d';ownerCardCss.setAttribute('data-twin-arc-owner-card-square','true');document.head.appendChild(ownerCardCss);
   }
   // Security-first UI: hide every owner management control before auth resolves.
   if(!document.querySelector('link[data-twin-arc-owner-security]')){
@@ -44,7 +44,7 @@
 
   // Independent enhancements: these cannot block the core site chain.
   load('js/page-content-editor-v2.js?v=20261101b');
-  load('js/program-card-logo-editor.js?v=20261101c');
+  load('js/program-card-logo-editor.js?v=20261101d');
   load('js/owner-page-edit-ui-fix.js?v=20261101b');
   load('js/safe-page-navigation-v2.js?v=20261101b');
   load('js/host-program-edit-position-fix.js?v=20261101a');
