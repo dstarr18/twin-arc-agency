@@ -36,14 +36,38 @@
   filter:drop-shadow(0 0 10px rgba(126,41,255,.42));
 }
 
-/* Host Program: keep each small Announcement card a true square. */
+/* Host Program: compact true-square Announcement cards without stretching the whole section. */
+.program-announcements{
+  height:520px!important;
+  min-height:520px!important;
+  max-height:520px!important;
+  align-self:start!important;
+  overflow:hidden!important;
+}
 .program-announcement-grid{
-  grid-template-rows:none!important;
+  grid-template-columns:repeat(2,minmax(0,140px))!important;
+  grid-template-rows:repeat(3,140px)!important;
+  justify-content:center!important;
   align-content:start!important;
+  gap:10px!important;
+  flex:none!important;
 }
 .program-announcement-card{
+  width:140px!important;
+  height:140px!important;
+  min-width:140px!important;
+  min-height:140px!important;
+  max-width:140px!important;
+  max-height:140px!important;
   aspect-ratio:1 / 1!important;
-  min-height:0!important;
+}
+.program-showcase-layout{
+  align-items:start!important;
+}
+.program-top-card{
+  min-height:520px!important;
+  height:520px!important;
+  max-height:520px!important;
 }
 
 @media(max-width:700px){
@@ -54,5 +78,41 @@
     letter-spacing:.32em!important;
     margin-top:5px!important;
     padding-left:.32em!important;
+  }
+  .program-announcements{
+    height:auto!important;
+    min-height:0!important;
+    max-height:none!important;
+  }
+  .program-announcement-grid{
+    grid-template-columns:repeat(2,minmax(0,128px))!important;
+    grid-template-rows:repeat(3,128px)!important;
+  }
+  .program-announcement-card{
+    width:128px!important;
+    height:128px!important;
+    min-width:128px!important;
+    min-height:128px!important;
+    max-width:128px!important;
+    max-height:128px!important;
+  }
+  .program-top-card{
+    height:auto!important;
+    max-height:none!important;
+  }
+}
+
+@media(max-width:380px){
+  .program-announcement-grid{
+    grid-template-columns:repeat(2,minmax(0,112px))!important;
+    grid-template-rows:repeat(3,112px)!important;
+  }
+  .program-announcement-card{
+    width:112px!important;
+    height:112px!important;
+    min-width:112px!important;
+    min-height:112px!important;
+    max-width:112px!important;
+    max-height:112px!important;
   }
 }
