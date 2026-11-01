@@ -6,6 +6,10 @@
   if(!document.querySelector('link[data-twin-arc-brand-centered]')){
     const brandCss=document.createElement('link');brandCss.rel='stylesheet';brandCss.href='css/brand-centered.css';brandCss.setAttribute('data-twin-arc-brand-centered','true');document.head.appendChild(brandCss);
   }
+  // Host Program owner-card preview: full square photo + compact Twin Arc logo beside owner name.
+  if(!document.querySelector('link[data-twin-arc-owner-card-square]')){
+    const ownerCardCss=document.createElement('link');ownerCardCss.rel='stylesheet';ownerCardCss.href='css/owner-card-square-preview.css?v=20261101a';ownerCardCss.setAttribute('data-twin-arc-owner-card-square','true');document.head.appendChild(ownerCardCss);
+  }
   // Security-first UI: hide every owner management control before auth resolves.
   if(!document.querySelector('link[data-twin-arc-owner-security]')){
     const securityCss=document.createElement('link');securityCss.rel='stylesheet';securityCss.href='css/owner-security.css';securityCss.setAttribute('data-twin-arc-owner-security','true');document.head.appendChild(securityCss);
