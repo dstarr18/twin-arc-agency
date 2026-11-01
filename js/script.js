@@ -37,6 +37,11 @@
   }
 
   function load(src,next){const s=document.createElement('script');s.src=src;s.onload=()=>next&&next();s.onerror=()=>console.error('[Twin Arc] Failed to load',src);document.head.appendChild(s);}
+
+  // Independent enhancements: these cannot block the core site chain.
+  load('js/page-content-editor-v2.js');
+  load('js/safe-page-navigation-v2.js');
+
   load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',()=>{
     installCloudDelete();
     load('js/weekly-activity-status.js',()=>load('js/cloud-events.js',()=>load('js/live-highlights.js',()=>load('js/editable-site-content.js',()=>load('js/dual-logo-controls.js')))));
