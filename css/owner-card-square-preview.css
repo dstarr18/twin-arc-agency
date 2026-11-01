@@ -1,0 +1,148 @@
+/* Twin Arc Agency — square owner card preview
+   Keeps the existing Host Program markup and changes presentation only. */
+
+#program .agency-founder-panel{
+  position:relative !important;
+  display:block !important;
+  width:min(100%,540px) !important;
+  aspect-ratio:1 / 1 !important;
+  min-height:0 !important;
+  height:auto !important;
+  padding:0 !important;
+  overflow:hidden !important;
+  border:1px solid rgba(142,72,255,.92) !important;
+  border-radius:24px !important;
+  background:#080611 !important;
+  box-shadow:0 0 35px rgba(125,63,255,.24),inset 0 0 45px rgba(31,16,72,.22) !important;
+}
+
+#program .agency-founder-side{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  display:block !important;
+  min-height:0 !important;
+  overflow:hidden !important;
+  border-radius:inherit !important;
+}
+
+#program .agency-founder-side > img{
+  position:absolute !important;
+  inset:0 !important;
+  width:100% !important;
+  height:100% !important;
+  max-width:none !important;
+  max-height:none !important;
+  object-fit:cover !important;
+  object-position:center 22% !important;
+  display:block !important;
+  border-radius:0 !important;
+}
+
+#program .agency-founder-side::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:1;
+  pointer-events:none;
+  background:linear-gradient(180deg,rgba(0,0,0,0) 45%,rgba(4,4,12,.14) 58%,rgba(4,4,12,.94) 100%);
+}
+
+#program .agency-founder-caption{
+  position:absolute !important;
+  z-index:2 !important;
+  left:0 !important;
+  right:0 !important;
+  bottom:0 !important;
+  padding:18px 20px 18px 82px !important;
+  min-height:116px !important;
+  background:transparent !important;
+  text-align:left !important;
+  color:#fff !important;
+}
+
+#program .agency-founder-caption h3{
+  margin:0 0 4px !important;
+  font-size:clamp(1.55rem,3.2vw,2rem) !important;
+  line-height:1.05 !important;
+  color:#fff !important;
+  text-shadow:0 2px 12px rgba(0,0,0,.75) !important;
+}
+
+#program .agency-founder-caption p{
+  margin:1px 0 !important;
+  line-height:1.25 !important;
+  color:#fff !important;
+  text-shadow:0 2px 10px rgba(0,0,0,.78) !important;
+}
+
+#program .agency-founder-caption .owner-line{font-size:.92rem !important;font-weight:700 !important;}
+#program .agency-founder-caption .agency-line{font-size:.9rem !important;font-weight:600 !important;}
+#program .agency-founder-caption .tagline-line{font-size:.75rem !important;font-weight:600 !important;opacity:.92 !important;}
+
+/* Existing logo column becomes a compact badge beside the owner's name. */
+#program .agency-logo-side{
+  position:absolute !important;
+  z-index:4 !important;
+  left:18px !important;
+  bottom:58px !important;
+  width:52px !important;
+  height:52px !important;
+  min-height:0 !important;
+  padding:0 !important;
+  margin:0 !important;
+  display:flex !important;
+  align-items:center !important;
+  justify-content:center !important;
+  background:rgba(7,5,18,.62) !important;
+  border:1px solid rgba(184,119,255,.5) !important;
+  border-radius:13px !important;
+  backdrop-filter:blur(7px) !important;
+  box-shadow:0 5px 18px rgba(0,0,0,.32),0 0 16px rgba(125,63,255,.25) !important;
+}
+
+#program .agency-logo-side img{
+  width:46px !important;
+  height:46px !important;
+  max-width:46px !important;
+  max-height:46px !important;
+  object-fit:contain !important;
+  margin:0 !important;
+  padding:0 !important;
+}
+
+@media(max-width:800px){
+  #program .agency-founder-panel{
+    width:100% !important;
+    max-width:560px !important;
+    aspect-ratio:1 / 1 !important;
+    min-height:0 !important;
+    border-radius:22px !important;
+    margin-inline:auto !important;
+  }
+  #program .agency-founder-side > img{
+    object-position:center 20% !important;
+  }
+  #program .agency-founder-caption{
+    padding:16px 16px 16px 74px !important;
+    min-height:108px !important;
+  }
+  #program .agency-founder-caption h3{
+    font-size:clamp(1.45rem,6.3vw,1.85rem) !important;
+  }
+  #program .agency-founder-caption .owner-line{font-size:.84rem !important;}
+  #program .agency-founder-caption .agency-line{font-size:.82rem !important;}
+  #program .agency-founder-caption .tagline-line{font-size:.69rem !important;}
+  #program .agency-logo-side{
+    left:15px !important;
+    bottom:55px !important;
+    width:48px !important;
+    height:48px !important;
+    border-radius:12px !important;
+  }
+  #program .agency-logo-side img{
+    width:42px !important;
+    height:42px !important;
+  }
+}
