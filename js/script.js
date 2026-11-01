@@ -44,6 +44,7 @@
   load('js/safe-page-navigation-v2.js?v=20261101b');
   load('js/host-program-edit-position-fix.js?v=20261101a');
   load('js/host-program-showcase.js?v=20261101a');
+  load('js/host-program-notes.js?v=20261101a');
 
   load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',()=>{
     installCloudDelete();
