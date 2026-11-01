@@ -6,6 +6,28 @@
     return btn.classList.contains('is-unlocked') || /OWNER\s*MODE\s*✓/i.test(btn.textContent||'');
   };
 
+  function installPlacementFix(){
+    if(document.getElementById('ownerPageEditPlacementFix'))return;
+    const style=document.createElement('style');
+    style.id='ownerPageEditPlacementFix';
+    style.textContent=`
+      main > section.page-editable > .page-edit-btn{
+        top:92px!important;
+        right:clamp(18px,4vw,58px)!important;
+        z-index:70!important;
+      }
+      @media(max-width:700px){
+        main > section.page-editable > .page-edit-btn{
+          top:78px!important;
+          right:12px!important;
+          max-width:calc(100vw - 24px);
+          white-space:nowrap;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
   function sync(){
     const unlocked=isOwner();
     document.body.classList.toggle('site-owner-unlocked',unlocked);
@@ -13,12 +35,13 @@
       btn.hidden=!unlocked;
       btn.style.setProperty('display',unlocked?'inline-flex':'none','important');
       if(unlocked){
-        btn.style.setProperty('z-index','80','important');
+        btn.style.setProperty('z-index','70','important');
       }
     });
   }
 
   function init(){
+    installPlacementFix();
     sync();
     let observed=null;
     const attach=()=>{
