@@ -17,7 +17,7 @@
 /* Black lower-third gradient to emphasize the purple logo and white text. */
 #program .agency-founder-caption{
   position:absolute!important;z-index:3!important;left:14px!important;right:14px!important;bottom:14px!important;
-  height:104px!important;min-height:104px!important;padding:14px 20px 12px 128px!important;
+  height:104px!important;min-height:104px!important;padding:14px 20px 12px 160px!important;
   border-radius:18px!important;border:1px solid rgba(255,255,255,.16)!important;
   background:linear-gradient(90deg,rgba(0,0,0,.94) 0%,rgba(7,7,12,.91) 36%,rgba(18,18,24,.86) 72%,rgba(28,28,36,.78) 100%)!important;
   box-shadow:0 10px 28px rgba(0,0,0,.34),0 0 18px rgba(0,0,0,.24)!important;
@@ -33,22 +33,22 @@
 #program .agency-founder-caption .agency-line{font-size:.76rem!important;font-weight:600!important;}
 #program .agency-founder-caption .tagline-line{font-size:.64rem!important;font-weight:600!important;opacity:.96!important;}
 #program .agency-logo-side{
-  position:absolute!important;z-index:4!important;left:22px!important;bottom:18px!important;width:102px!important;height:96px!important;
+  position:absolute!important;z-index:4!important;left:22px!important;bottom:13px!important;width:132px!important;height:108px!important;
   min-height:0!important;padding:0!important;margin:0!important;display:flex!important;align-items:center!important;justify-content:center!important;
   background:transparent!important;border:0!important;border-radius:0!important;backdrop-filter:none!important;box-shadow:none!important;overflow:visible!important;
 }
 #program .agency-logo-side img{
-  width:98px!important;height:92px!important;max-width:98px!important;max-height:92px!important;object-fit:contain!important;margin:0!important;padding:0!important;
+  width:126px!important;height:102px!important;max-width:126px!important;max-height:102px!important;object-fit:contain!important;margin:0!important;padding:0!important;
   filter:drop-shadow(0 3px 9px rgba(0,0,0,.72)) drop-shadow(0 0 8px rgba(122,69,255,.24))!important;
 }
 @media(max-width:800px){
   #program .agency-founder-panel{width:100%!important;max-width:560px!important;aspect-ratio:1/1!important;min-height:0!important;border-radius:22px!important;margin-inline:auto!important;}
   #program .agency-founder-side>img{object-position:center 20%!important;}
-  #program .agency-founder-caption{left:10px!important;right:10px!important;bottom:10px!important;height:98px!important;min-height:98px!important;padding:12px 12px 11px 112px!important;border-radius:16px!important;}
+  #program .agency-founder-caption{left:10px!important;right:10px!important;bottom:10px!important;height:98px!important;min-height:98px!important;padding:12px 12px 11px 140px!important;border-radius:16px!important;}
   #program .agency-founder-caption h3{font-size:clamp(1rem,4.7vw,1.22rem)!important;}
   #program .agency-founder-caption .owner-line{font-size:.70rem!important;}
   #program .agency-founder-caption .agency-line{font-size:.70rem!important;}
   #program .agency-founder-caption .tagline-line{font-size:.60rem!important;}
-  #program .agency-logo-side{left:14px!important;bottom:12px!important;width:94px!important;height:92px!important;}
-  #program .agency-logo-side img{width:90px!important;height:88px!important;max-width:90px!important;max-height:88px!important;}
+  #program .agency-logo-side{left:12px!important;bottom:8px!important;width:124px!important;height:108px!important;}
+  #program .agency-logo-side img{width:118px!important;height:102px!important;max-width:118px!important;max-height:102px!important;}
 }
