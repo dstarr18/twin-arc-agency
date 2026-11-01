@@ -7,7 +7,7 @@
     const brandCss=document.createElement('link');brandCss.rel='stylesheet';brandCss.href='css/brand-centered.css';brandCss.setAttribute('data-twin-arc-brand-centered','true');document.head.appendChild(brandCss);
   }
   if(!document.querySelector('link[data-twin-arc-showcase-fullfit]')){
-    const showcaseCss=document.createElement('link');showcaseCss.rel='stylesheet';showcaseCss.href='css/host-program-showcase-fullfit.css?v=20261101a';showcaseCss.setAttribute('data-twin-arc-showcase-fullfit','true');document.head.appendChild(showcaseCss);
+    const showcaseCss=document.createElement('link');showcaseCss.rel='stylesheet';showcaseCss.href='css/host-program-showcase-fullfit.css?v=20261101b';showcaseCss.setAttribute('data-twin-arc-showcase-fullfit','true');document.head.appendChild(showcaseCss);
   }
   // Host Program owner-card preview: full square photo + lower-third branding strip.
   if(!document.querySelector('link[data-twin-arc-owner-card-square]')){
