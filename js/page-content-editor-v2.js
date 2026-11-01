@@ -10,13 +10,14 @@
   function style(){
     if($('pageContentEditorV2Styles'))return;
     const s=document.createElement('style');s.id='pageContentEditorV2Styles';s.textContent=`
-      .page-edit-btn{display:none;position:absolute;z-index:12;right:clamp(16px,4vw,56px);top:24px;border:1px solid rgba(185,129,255,.55);background:rgba(12,8,28,.86);color:#fff;border-radius:999px;padding:9px 14px;font:700 10px Montserrat,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer}
+      .page-edit-btn{display:none;position:absolute;z-index:12;right:clamp(18px,4vw,56px);top:112px;border:1px solid rgba(185,129,255,.55);background:rgba(12,8,28,.92);color:#fff;border-radius:999px;padding:9px 14px;font:700 10px Montserrat,Arial,sans-serif;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;white-space:nowrap;box-shadow:0 8px 24px rgba(0,0,0,.24)}
       body.site-owner-unlocked .page-edit-btn,body:has(#adminModeBtn.is-unlocked) .page-edit-btn{display:inline-flex}.page-editable{position:relative}
       .page-editor-modal[hidden]{display:none!important}.page-editor-modal{position:fixed;inset:0;z-index:180;display:grid;place-items:center;padding:18px}.page-editor-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.82);backdrop-filter:blur(8px)}
       .page-editor-dialog{position:relative;z-index:1;width:min(900px,96vw);max-height:92vh;overflow:auto;border:1px solid rgba(177,108,255,.45);border-radius:22px;background:linear-gradient(145deg,#11102a,#090814);padding:clamp(22px,4vw,38px)}
       .page-editor-close{position:absolute;right:16px;top:14px;width:38px;height:38px;border-radius:50%;border:1px solid rgba(255,255,255,.18);background:#ffffff0d;color:#fff;font-size:22px;cursor:pointer}
       .page-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.page-editor-grid .full{grid-column:1/-1}.page-editor-grid input,.page-editor-grid textarea{background:#07091d;border:1px solid #383c70;color:#fff;border-radius:10px;padding:12px;width:100%}.page-editor-grid textarea{min-height:86px;resize:vertical}.page-editor-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px}.page-editor-status{min-height:20px;color:#c793ff;font-size:13px}.page-editor-preview{width:130px;height:110px;object-fit:contain;background:#ffffff08;border-radius:12px;margin-top:8px}
-      @media(max-width:700px){.page-editor-grid{grid-template-columns:1fr}.page-editor-grid .full{grid-column:auto}.page-edit-btn{right:12px;top:12px}}
+      @media(max-width:900px){.page-edit-btn{top:96px;right:18px}}
+      @media(max-width:700px){.page-editor-grid{grid-template-columns:1fr}.page-editor-grid .full{grid-column:auto}.page-edit-btn{top:86px;right:12px;padding:8px 11px;font-size:9px}}
     `;document.head.appendChild(s);
   }
   function setText(id,v){const el=$(id);if(el&&v!=null)el.textContent=v;}
