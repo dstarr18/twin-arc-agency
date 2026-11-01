@@ -3,6 +3,9 @@
   if(!document.querySelector('link[data-twin-arc-event-uniform]')){
     const css=document.createElement('link');css.rel='stylesheet';css.href='css/event-card-uniform.css';css.setAttribute('data-twin-arc-event-uniform','true');document.head.appendChild(css);
   }
+  if(!document.querySelector('link[data-twin-arc-brand-centered]')){
+    const brandCss=document.createElement('link');brandCss.rel='stylesheet';brandCss.href='css/brand-centered.css';brandCss.setAttribute('data-twin-arc-brand-centered','true');document.head.appendChild(brandCss);
+  }
   // Security-first UI: hide every owner management control before auth resolves.
   if(!document.querySelector('link[data-twin-arc-owner-security]')){
     const securityCss=document.createElement('link');securityCss.rel='stylesheet';securityCss.href='css/owner-security.css';securityCss.setAttribute('data-twin-arc-owner-security','true');document.head.appendChild(securityCss);
