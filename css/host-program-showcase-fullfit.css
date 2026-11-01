@@ -86,3 +86,24 @@
     padding:16px 16px 18px!important;
   }
 }
+
+/* Mobile announcement cards: show the entire uploaded image instead of cropping it. */
+@media(max-width:560px){
+  .program-announcement-media{
+    display:flex!important;
+    align-items:center!important;
+    justify-content:center!important;
+    overflow:hidden!important;
+    background:radial-gradient(circle at 50% 35%,rgba(112,64,255,.16),rgba(8,8,20,.98))!important;
+  }
+  .program-announcement-media img{
+    width:100%!important;
+    height:100%!important;
+    max-width:100%!important;
+    max-height:100%!important;
+    object-fit:contain!important;
+    object-position:center center!important;
+    display:block!important;
+    background:#080814!important;
+  }
+}
