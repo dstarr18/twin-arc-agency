@@ -27,6 +27,15 @@
   white-space:nowrap!important;
   text-align:center!important;
 }
+
+/* Header logo only: remove visible dark/black image square while preserving the logo colors. */
+.brand img{
+  background:transparent!important;
+  box-shadow:none!important;
+  mix-blend-mode:screen;
+  filter:drop-shadow(0 0 10px rgba(126,41,255,.42));
+}
+
 @media(max-width:700px){
   .brand-copy{min-width:105px;}
   .brand-copy .brand-main{font-size:13px!important;}
