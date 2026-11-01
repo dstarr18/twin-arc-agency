@@ -51,8 +51,11 @@
   load('js/host-program-showcase.js?v=20261101a');
   load('js/host-program-notes.js?v=20261101a');
 
-  load('js/script-core-v11.js',()=>load('js/host-persistence-patch.js',()=>{
-    installCloudDelete();
-    load('js/weekly-activity-status.js',()=>load('js/cloud-events.js',()=>load('js/live-highlights.js',()=>load('js/editable-site-content.js',()=>load('js/dual-logo-controls.js')))));
-  }));
+  load('js/script-core-v11.js',()=>{
+    load('js/dashboard-navigation-fix.js?v=20261101a');
+    load('js/host-persistence-patch.js',()=>{
+      installCloudDelete();
+      load('js/weekly-activity-status.js',()=>load('js/cloud-events.js',()=>load('js/live-highlights.js',()=>load('js/editable-site-content.js',()=>load('js/dual-logo-controls.js')))));
+    });
+  });
 })();
