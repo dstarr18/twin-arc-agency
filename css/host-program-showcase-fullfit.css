@@ -9,14 +9,14 @@
   width:100%!important;
   min-width:0!important;
   max-width:none!important;
-  height:520px!important;
-  min-height:520px!important;
-  max-height:520px!important;
   box-sizing:border-box!important;
   overflow:hidden!important;
 }
 
 .program-top-card{
+  height:520px!important;
+  min-height:520px!important;
+  max-height:520px!important;
   display:flex!important;
   flex-direction:column!important;
   margin:0!important;
@@ -27,10 +27,7 @@
   width:100%!important;
   height:auto!important;
   min-width:0!important;
-  max-width:none!important;
   min-height:0!important;
-  max-height:none!important;
-  aspect-ratio:auto!important;
   overflow:hidden!important;
   display:flex!important;
   align-items:center!important;
@@ -80,43 +77,53 @@
   text-overflow:ellipsis!important;
 }
 
+/* Announcement panel: fixed grid so cards never overlap. */
 .program-announcements{
+  height:520px!important;
+  min-height:520px!important;
+  max-height:520px!important;
   display:flex!important;
   flex-direction:column!important;
   padding:16px!important;
 }
 
+.program-announcements-head{
+  flex:0 0 auto!important;
+}
+
 .program-announcement-grid{
-  flex:1 1 auto!important;
-  min-height:0!important;
+  flex:0 0 330px!important;
+  height:330px!important;
+  min-height:330px!important;
+  max-height:330px!important;
   display:grid!important;
-  grid-template-columns:repeat(2,minmax(0,1fr))!important;
-  grid-template-rows:repeat(3,minmax(0,1fr))!important;
+  grid-template-columns:repeat(3,minmax(0,1fr))!important;
+  grid-template-rows:repeat(2,160px)!important;
   gap:10px!important;
   overflow:hidden!important;
+  align-items:stretch!important;
 }
 
 .program-announcement-card{
-  width:auto!important;
-  height:auto!important;
+  width:100%!important;
+  height:160px!important;
   min-width:0!important;
   max-width:none!important;
-  min-height:0!important;
-  max-height:none!important;
+  min-height:160px!important;
+  max-height:160px!important;
   overflow:hidden!important;
   display:flex!important;
   flex-direction:column!important;
+  box-sizing:border-box!important;
 }
 
 .program-announcement-media{
-  flex:1 1 auto!important;
+  flex:0 0 118px!important;
   width:100%!important;
-  height:auto!important;
+  height:118px!important;
   min-width:0!important;
-  max-width:none!important;
-  min-height:0!important;
-  max-height:none!important;
-  aspect-ratio:auto!important;
+  min-height:118px!important;
+  max-height:118px!important;
   display:flex!important;
   align-items:center!important;
   justify-content:center!important;
@@ -137,6 +144,7 @@
 
 .program-announcement-label{
   flex:0 0 42px!important;
+  width:100%!important;
   height:42px!important;
   min-height:42px!important;
   max-height:42px!important;
@@ -161,6 +169,7 @@
   min-height:82px!important;
   max-height:82px!important;
   overflow:hidden!important;
+  margin-top:12px!important;
 }
 
 .program-notes-text{
@@ -175,12 +184,19 @@
     grid-template-columns:1fr!important;
   }
 
-  .program-top-card,
-  .program-announcements{
+  .program-top-card{
     width:min(100%,560px)!important;
     height:500px!important;
     min-height:500px!important;
     max-height:500px!important;
+    margin:0 auto!important;
+  }
+
+  .program-announcements{
+    width:min(100%,560px)!important;
+    height:600px!important;
+    min-height:600px!important;
+    max-height:600px!important;
     margin:0 auto!important;
   }
 
@@ -190,23 +206,28 @@
     min-height:90px!important;
     max-height:90px!important;
   }
-}
-
-@media(max-width:560px){
-  .program-top-card,
-  .program-announcements{
-    width:100%!important;
-    height:470px!important;
-    min-height:470px!important;
-    max-height:470px!important;
-  }
-
-  .program-announcements{
-    padding:12px!important;
-  }
 
   .program-announcement-grid{
+    flex:0 0 412px!important;
+    height:412px!important;
+    min-height:412px!important;
+    max-height:412px!important;
+    grid-template-columns:repeat(2,minmax(0,1fr))!important;
+    grid-template-rows:repeat(3,132px)!important;
     gap:8px!important;
+  }
+
+  .program-announcement-card{
+    height:132px!important;
+    min-height:132px!important;
+    max-height:132px!important;
+  }
+
+  .program-announcement-media{
+    flex-basis:94px!important;
+    height:94px!important;
+    min-height:94px!important;
+    max-height:94px!important;
   }
 
   .program-announcement-label{
@@ -215,6 +236,23 @@
     min-height:38px!important;
     max-height:38px!important;
     padding:6px 8px!important;
+  }
+}
+
+@media(max-width:560px){
+  .program-top-card{
+    width:100%!important;
+    height:470px!important;
+    min-height:470px!important;
+    max-height:470px!important;
+  }
+
+  .program-announcements{
+    width:100%!important;
+    height:590px!important;
+    min-height:590px!important;
+    max-height:590px!important;
+    padding:12px!important;
   }
 
   .program-notes-box{
