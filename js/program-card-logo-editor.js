@@ -10,9 +10,9 @@
     const s=document.createElement('style');
     s.id='programCardLogoEditorStyles';
     s.textContent=`
-      .program-logo-edit-btn{display:none;position:absolute;z-index:15;right:18px;bottom:132px;border:1px solid rgba(192,139,255,.58);background:rgba(10,7,25,.90);color:#fff;border-radius:999px;padding:8px 11px;font:700 9px Montserrat,Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.28)}
-      body.site-owner-unlocked .program-logo-edit-btn,body:has(#adminModeBtn.is-unlocked) .program-logo-edit-btn{display:inline-flex}
-      @media(max-width:700px){.program-logo-edit-btn{right:14px;bottom:120px;font-size:8px;padding:7px 9px}}
+      .program-logo-edit-btn{display:none;position:static;z-index:15;margin:12px 0 0 auto;border:1px solid rgba(192,139,255,.58);background:rgba(10,7,25,.90);color:#fff;border-radius:999px;padding:8px 12px;font:700 9px Montserrat,Arial,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;box-shadow:0 8px 22px rgba(0,0,0,.28)}
+      body.site-owner-unlocked .program-logo-edit-btn,body:has(#adminModeBtn.is-unlocked) .program-logo-edit-btn{display:flex}
+      @media(max-width:700px){.program-logo-edit-btn{margin:10px auto 0;font-size:8px;padding:7px 10px}}
     `;
     document.head.appendChild(s);
   }
@@ -56,8 +56,9 @@
 
   function addButton(){
     const panel=document.querySelector('#program .agency-founder-panel');
-    if(!panel||panel.querySelector('.program-logo-edit-btn'))return;
-    const b=document.createElement('button');b.type='button';b.className='program-logo-edit-btn';b.textContent='✎ Edit Card Logo';b.onclick=chooseLogo;panel.appendChild(b);
+    if(!panel||document.querySelector('#program .program-logo-edit-btn'))return;
+    const b=document.createElement('button');b.type='button';b.className='program-logo-edit-btn';b.textContent='✎ Edit Card Logo';b.onclick=chooseLogo;
+    panel.insertAdjacentElement('afterend',b);
   }
 
   function syncOwner(){document.body.classList.toggle('site-owner-unlocked',owner());}
