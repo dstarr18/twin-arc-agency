@@ -2,6 +2,7 @@
 (function(){
   const SALARY_FIELD='weekly_salary';
   const previousFetch=window.fetch.bind(window);
+  let salaryRenderVersion=0;
 
   function moneyNumber(value){
     const raw=String(value??'').trim().replace(/,/g,'').replace(/[^0-9.+-]/g,'');
@@ -54,15 +55,20 @@
   }
 
   async function renderPublicSalaryRow(){
+    const myVersion=++salaryRenderVersion;
     const body=document.getElementById('quotaBody');
     if(!body)return;
-    body.querySelectorAll('.weekly-salary-row').forEach(el=>el.remove());
     const map=await fetchSalaryMap();
-    if(!document.body.contains(body))return;
+    if(myVersion!==salaryRenderVersion||!document.body.contains(body))return;
+
+    // Always clean up immediately before insertion so overlapping async renders
+    // can never leave more than one public Weekly Salary row behind.
+    body.querySelectorAll('.weekly-salary-row').forEach(el=>el.remove());
+
     const tr=document.createElement('tr');
     tr.className='weekly-salary-row';
     tr.innerHTML=`<th class="row-title">Weekly Salary</th>${[0,1,2,3,4].map(i=>`<td class="week-cell" data-salary-slot="${i}">${formatSalary(map['slot'+i])}</td>`).join('')}`;
-    const statusRow=Array.from(body.querySelectorAll('tr')).find(row=>row.querySelector('.row-title')?.textContent==='Status');
+    const statusRow=Array.from(body.querySelectorAll('tr')).find(row=>row.querySelector('.row-title')?.textContent?.trim()==='Status');
     if(statusRow)body.insertBefore(tr,statusRow);else body.appendChild(tr);
   }
 
