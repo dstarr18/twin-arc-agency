@@ -1,7 +1,7 @@
 // Twin Arc Agency — safe separate-page navigation.
 (function(){
-  const groups={home:['home'],about:['about','founder'],hosts:['hosts'],performance:['performance'],program:['program'],events:['events'],highlights:['live-highlights'],join:['join']};
-  const routeForId=id=>id==='founder'?'about':id==='live-highlights'?'highlights':groups[id]?id:null;
+  const groups={home:['home'],about:['about'],hosts:['hosts'],performance:['performance'],program:['program'],events:['events'],highlights:['live-highlights'],join:['join']};
+  const routeForId=id=>id==='live-highlights'?'highlights':groups[id]?id:null;
   function allSections(){return Array.from(document.querySelectorAll('main > section')).filter(s=>s.id);}
   function reveal(section){section.querySelectorAll('.reveal').forEach(el=>el.classList.add('visible'));}
   function show(route,updateHash=true){
