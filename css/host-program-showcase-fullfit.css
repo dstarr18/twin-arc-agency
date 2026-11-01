@@ -1,33 +1,88 @@
+.program-top-card{
+  height:auto!important;
+  max-height:none!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  display:flex!important;
+  flex-direction:column!important;
+}
+
 .program-top-media{
   flex:none!important;
   width:100%!important;
   height:auto!important;
-  aspect-ratio:auto!important;
   min-height:0!important;
+  max-height:none!important;
+  aspect-ratio:auto!important;
   overflow:visible!important;
-  display:block!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding:18px 18px 10px!important;
   background:radial-gradient(circle at 50% 35%,rgba(112,64,255,.18),rgba(8,8,20,.98));
 }
+
 .program-top-media img{
-  width:100%!important;
+  width:90%!important;
   height:auto!important;
-  max-width:100%!important;
+  max-width:90%!important;
   max-height:none!important;
   object-fit:contain!important;
   object-position:center center!important;
   display:block!important;
-  background:#080814;
+  flex:none!important;
+  margin:0 auto!important;
+  background:transparent!important;
 }
+
+.program-top-copy{
+  display:block!important;
+  visibility:visible!important;
+  opacity:1!important;
+  position:relative!important;
+  flex:none!important;
+  width:100%!important;
+  height:auto!important;
+  max-height:none!important;
+  padding:18px 20px 22px!important;
+  z-index:3!important;
+  background:linear-gradient(180deg,rgba(8,8,20,.20),rgba(8,8,20,.96))!important;
+  border-top:1px solid rgba(145,96,255,.20)!important;
+}
+
+.program-top-copy h4{
+  display:block!important;
+  margin:0 0 8px!important;
+}
+
+.program-top-copy p{
+  display:block!important;
+  margin:0!important;
+}
+
 @media(max-width:860px){
+  .program-top-card{
+    height:auto!important;
+    max-height:none!important;
+  }
   .program-top-media{
     flex:none!important;
     height:auto!important;
-    aspect-ratio:auto!important;
     min-height:0!important;
+    max-height:none!important;
+    aspect-ratio:auto!important;
+    padding:14px 14px 8px!important;
   }
   .program-top-media img{
-    width:100%!important;
+    width:90%!important;
+    max-width:90%!important;
     height:auto!important;
     max-height:none!important;
+  }
+  .program-top-copy{
+    display:block!important;
+    flex:none!important;
+    height:auto!important;
+    padding:16px 16px 18px!important;
   }
 }
