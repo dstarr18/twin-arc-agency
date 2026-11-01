@@ -14,6 +14,22 @@
     return '';
   }
   function normalizeMonthLabel(value){return String(value||'').trim().replace(/\s+/g,' ');}
+  function parsePlainNumber(value){
+    const raw=String(value??'').trim();
+    if(!raw||raw==='-')return 0;
+    const cleaned=raw.replace(/,/g,'').replace(/[^0-9.+-]/g,'');
+    const n=Number(cleaned);
+    return Number.isFinite(n)?n:0;
+  }
+  function parseHoursValue(value){
+    const raw=String(value??'').trim().toLowerCase();
+    if(!raw||raw==='-')return 0;
+    const colon=raw.match(/^(\d+(?:\.\d+)?):([0-5]?\d)$/);
+    if(colon)return Number(colon[1])+Number(colon[2])/60;
+    const hm=raw.match(/^(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)(?:\s*(\d+(?:\.\d+)?)\s*(?:m|min|mins|minute|minutes))?$/);
+    if(hm)return Number(hm[1])+(hm[2]?Number(hm[2])/60:0);
+    return parsePlainNumber(raw);
+  }
 
   function ensureEditorField(){
     const form=document.getElementById('weeklyRecordForm');if(!form)return;
@@ -32,6 +48,11 @@
       const url=typeof input==='string'?input:(input?.url||'');
       if(url.includes('/rest/v1/host_weekly_records')&&String(init?.method||'GET').toUpperCase()==='POST'&&init?.body){
         const payload=JSON.parse(init.body);const select=document.getElementById('weeklyActivityStatus');payload[STATUS_FIELD]=select?.value==='Inactive'?'Inactive':'Active';const month=normalizeMonthLabel(document.getElementById('weeklyMonth')?.value||dashboardMonth());if(month)payload.month_year=month;
+        // Read directly from the editor inputs so formatted values are not lost when the core code turns NaN into null during JSON serialization.
+        const coinsEl=document.getElementById('weeklyCoins'),daysEl=document.getElementById('weeklyDays'),hoursEl=document.getElementById('weeklyHours');
+        if(coinsEl)payload.coins_received=parsePlainNumber(coinsEl.value);
+        if(daysEl)payload.streaming_days=parsePlainNumber(daysEl.value);
+        if(hoursEl)payload.streaming_hours=parseHoursValue(hoursEl.value);
         ['coins_received','streaming_days','streaming_hours'].forEach(k=>{if(payload[k]===null||payload[k]==='-'||!Number.isFinite(Number(payload[k])))payload[k]=0;});
         init={...init,body:JSON.stringify(payload)};
       }
