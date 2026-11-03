@@ -82,7 +82,7 @@
     load('js/dashboard-navigation-fix.js?v=20261102c');
     load('js/host-persistence-patch.js',()=>{
       installCloudDelete();
-      load('js/weekly-activity-status.js?v=20261103minutes1',()=>load('js/weekly-salary.js?v=20261102i',()=>load('js/cloud-events.js',()=>load('js/live-highlights.js',()=>load('js/editable-site-content.js?v=20261102b',()=>load('js/dual-logo-controls.js?v=20261102f'))))));
+      load('js/weekly-activity-status.js?v=20261103minutes2',()=>load('js/weekly-salary.js?v=20261102i',()=>load('js/cloud-events.js',()=>load('js/live-highlights.js',()=>load('js/editable-site-content.js?v=20261102b',()=>load('js/dual-logo-controls.js?v=20261102f'))))));
     });
   });
 })();
