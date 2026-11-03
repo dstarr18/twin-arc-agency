@@ -5,6 +5,7 @@
   let salaryRenderVersion=0;
   let salariesRevealed=false;
   let revealedSalaryValues={};
+  let lastSalaryToggleAt=0;
 
   function moneyNumber(value){
     const raw=String(value??'').trim().replace(/,/g,'').replace(/[^0-9.+-]/g,'');
@@ -24,7 +25,7 @@
     const style=document.createElement('style');
     style.id='salaryPrivacyStyles';
     style.textContent=`
-      .salary-row-unlock{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;border:0;background:transparent;color:inherit;padding:0;margin:0;font:inherit;font-weight:inherit;text-align:left;cursor:pointer;line-height:1.15}
+      .salary-row-unlock{display:flex;flex-direction:column;align-items:flex-start;gap:2px;width:100%;border:0;background:transparent;color:inherit;padding:0;margin:0;font:inherit;font-weight:inherit;text-align:left;cursor:pointer;line-height:1.15;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
       .salary-row-unlock .salary-unlock-line2{font-size:.78em;opacity:.9;font-weight:800;white-space:normal}
       .salary-row-unlock:hover .salary-unlock-line2{text-decoration:underline}
       .salary-masked{opacity:.58;font-weight:800;letter-spacing:.08em}
@@ -32,7 +33,7 @@
       .salary-pin-hint{display:block;margin-top:5px;font-size:.78rem;opacity:.7;font-weight:600}
       .salary-pin-field input{letter-spacing:.18em}
       @media(max-width:700px){
-        .salary-row-unlock{font-size:.94em}
+        .salary-row-unlock{font-size:.94em;min-height:44px;justify-content:center}
         .salary-row-unlock .salary-unlock-line2{font-size:.72em;line-height:1.15}
       }
     `;
@@ -234,12 +235,25 @@
     };
   }
 
+  function handleSalaryToggleEvent(e){
+    const btn=e.target.closest?.('[data-toggle-all-salaries]');
+    if(!btn)return;
+    const now=Date.now();
+    if(now-lastSalaryToggleAt<350){e.preventDefault();e.stopPropagation();return;}
+    lastSalaryToggleAt=now;
+    e.preventDefault();
+    e.stopPropagation();
+    unlockAllSalaries(btn);
+  }
+
   const quota=document.getElementById('quotaSheet');
   if(quota){
-    quota.addEventListener('click',e=>{
-      const btn=e.target.closest('[data-toggle-all-salaries]');
-      if(btn){e.preventDefault();e.stopPropagation();unlockAllSalaries(btn);}
-    },true);
+    if(window.PointerEvent){
+      quota.addEventListener('pointerup',handleSalaryToggleEvent,true);
+    }else{
+      quota.addEventListener('touchend',handleSalaryToggleEvent,{capture:true,passive:false});
+    }
+    quota.addEventListener('click',handleSalaryToggleEvent,true);
   }
 
   const form=document.getElementById('weeklyRecordForm');
