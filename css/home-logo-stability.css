@@ -1,5 +1,6 @@
 /* Keep the Home hero logo large and fixed from first paint.
-   Override the smaller base/mobile sizes so the logo never shrinks after load. */
+   The saved Home/Main logo zoom is 1.8, so keep that visual scale permanently
+   and remove any load-time transition that makes it appear to shrink. */
 .hero-content.reveal{
   transform:none !important;
   transition:opacity .25s ease !important;
@@ -19,7 +20,8 @@
   width:100% !important;
   height:100% !important;
   object-fit:contain !important;
-  transform:none !important;
+  transform:scale(1.8) !important;
+  transform-origin:center center !important;
   transition:none !important;
 }
 @media(max-width:800px){
