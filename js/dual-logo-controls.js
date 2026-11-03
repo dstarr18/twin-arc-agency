@@ -7,26 +7,29 @@
   let headerPreviewUrl=null, heroPreviewUrl=null;
 
   const $=id=>document.getElementById(id);
-  const clamp=n=>Math.min(1.8,Math.max(.45,Number(n)||1));
+  const clampHeader=n=>Math.min(1.8,Math.max(.45,Number(n)||1));
+  const clampHero=n=>Math.min(2.5,Math.max(.45,Number(n)||1));
+  const clampForKind=(kind,n)=>kind==='hero'?clampHero(n):clampHeader(n);
   const ownerUnlocked=()=>document.getElementById('adminModeBtn')?.classList.contains('is-unlocked')===true;
 
   function cacheHeaderState(){
-    try{localStorage.setItem(CACHE_KEY,JSON.stringify({url:state.header_logo_url||null,scale:clamp(state.header_logo_scale)}));}catch(_){ }
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify({url:state.header_logo_url||null,scale:clampHeader(state.header_logo_scale)}));}catch(_){ }
   }
 
-  function applyLogo(selector,url,scale){
+  function applyLogo(selector,url,scale,maxScale){
     if(!url)return;
+    const safe=Math.min(maxScale,Math.max(.45,Number(scale)||1));
     document.querySelectorAll(selector).forEach(img=>{
       img.src=url;
-      img.style.setProperty('transform',`scale(${clamp(scale)})`);
+      img.style.setProperty('transform',`scale(${safe})`);
       img.style.setProperty('transform-origin','center center');
       img.style.setProperty('transition','none','important');
     });
   }
 
   function applyState(){
-    applyLogo('.brand img',state.header_logo_url,state.header_logo_scale);
-    applyLogo('.logo-wrap img',state.hero_logo_url,state.hero_logo_scale);
+    applyLogo('.brand img',state.header_logo_url,state.header_logo_scale,1.8);
+    applyLogo('.logo-wrap img',state.hero_logo_url,state.hero_logo_scale,2.5);
     cacheHeaderState();
     updatePreview('header');
     updatePreview('hero');
@@ -39,9 +42,9 @@
       const row=(await r.json())[0]||{};
       state={
         header_logo_url:row.header_logo_url||row.logo_url||null,
-        header_logo_scale:clamp(row.header_logo_scale??row.logo_scale??1),
+        header_logo_scale:clampHeader(row.header_logo_scale??row.logo_scale??1),
         hero_logo_url:row.hero_logo_url||row.logo_url||null,
-        hero_logo_scale:clamp(row.hero_logo_scale??row.logo_scale??1)
+        hero_logo_scale:clampHero(row.hero_logo_scale??row.logo_scale??1)
       };
       applyState();
     }catch(err){console.error('[Twin Arc] separate logo settings load failed',err);}
@@ -69,12 +72,14 @@
   }
 
   function card(kind,title,help){
-    return `<section class="dual-logo-card" data-logo-kind="${kind}"><h3>${title}</h3><p>${help}</p><input id="${kind}LogoFile" type="file" accept="image/*"><div class="dual-logo-preview-shell"><img id="${kind}LogoPreview" alt="${title} preview"></div><div class="dual-logo-zoom"><button type="button" id="${kind}LogoZoomOut" aria-label="Zoom out ${title}">−</button><input id="${kind}LogoZoom" type="range" min="0.45" max="1.8" step="0.05" value="1" aria-label="${title} zoom"><button type="button" id="${kind}LogoZoomIn" aria-label="Zoom in ${title}">+</button></div><div class="dual-logo-value"><span id="${kind}LogoZoomValue">100%</span></div></section>`;
+    const max=kind==='hero'?'2.5':'1.8';
+    return `<section class="dual-logo-card" data-logo-kind="${kind}"><h3>${title}</h3><p>${help}</p><input id="${kind}LogoFile" type="file" accept="image/*"><div class="dual-logo-preview-shell"><img id="${kind}LogoPreview" alt="${title} preview"></div><div class="dual-logo-zoom"><button type="button" id="${kind}LogoZoomOut" aria-label="Zoom out ${title}">−</button><input id="${kind}LogoZoom" type="range" min="0.45" max="${max}" step="0.05" value="1" aria-label="${title} zoom"><button type="button" id="${kind}LogoZoomIn" aria-label="Zoom in ${title}">+</button></div><div class="dual-logo-value"><span id="${kind}LogoZoomValue">100%</span></div></section>`;
   }
 
   function updatePreview(kind){
     const img=$(`${kind}LogoPreview`);
-    const scale=clamp(state[`${kind==='hero'?'hero':'header'}_logo_scale`]);
+    const key=kind==='hero'?'hero_logo_scale':'header_logo_scale';
+    const scale=clampForKind(kind,state[key]);
     const url=kind==='header'?(headerPreviewUrl||state.header_logo_url):(heroPreviewUrl||state.hero_logo_url);
     if(img&&url){img.src=url;img.style.transform=`scale(${scale})`;}
     const range=$(`${kind}LogoZoom`);if(range)range.value=String(scale);
@@ -83,10 +88,10 @@
 
   function setScale(kind,value){
     const key=kind==='header'?'header_logo_scale':'hero_logo_scale';
-    state[key]=clamp(value);
+    state[key]=clampForKind(kind,value);
     updatePreview(kind);
-    if(kind==='header')applyLogo('.brand img',state.header_logo_url,state.header_logo_scale);
-    else applyLogo('.logo-wrap img',state.hero_logo_url,state.hero_logo_scale);
+    if(kind==='header')applyLogo('.brand img',state.header_logo_url,state.header_logo_scale,1.8);
+    else applyLogo('.logo-wrap img',state.hero_logo_url,state.hero_logo_scale,2.5);
   }
 
   function bindKind(kind){
