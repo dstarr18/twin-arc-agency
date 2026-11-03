@@ -6,6 +6,9 @@
   let salariesRevealed=false;
   let revealedSalaryValues={};
   let revealedHostId=null;
+  let salaryBusy=false;
+
+  function isMobile(){return window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;}
 
   function moneyNumber(value){
     const raw=String(value??'').trim().replace(/,/g,'').replace(/[^0-9.+-]/g,'');
@@ -42,6 +45,17 @@
       .salary-revealed{color:#fff;font-weight:900}
       .salary-pin-hint{display:block;margin-top:5px;font-size:.78rem;opacity:.7;font-weight:600}
       .salary-pin-field input{letter-spacing:.18em}
+      #salaryPinModal{position:fixed;inset:0;z-index:2147483000;background:rgba(5,8,25,.72);display:flex;align-items:center;justify-content:center;padding:22px}
+      #salaryPinModal[hidden]{display:none!important}
+      #salaryPinModal .salary-pin-card{width:min(92vw,390px);background:#11183b;border:1px solid rgba(187,128,255,.45);border-radius:18px;padding:20px;box-shadow:0 22px 60px rgba(0,0,0,.5);color:#fff}
+      #salaryPinModal h3{margin:0 0 6px;font-size:1.15rem}
+      #salaryPinModal p{margin:0 0 14px;opacity:.8;font-size:.9rem}
+      #salaryPinModal input{width:100%;box-sizing:border-box;font-size:1.3rem;letter-spacing:.28em;text-align:center;padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:#090f2b;color:#fff}
+      #salaryPinModal .salary-pin-error{min-height:20px;margin-top:8px;color:#ffaaaa;font-size:.82rem}
+      #salaryPinModal .salary-pin-actions{display:flex;gap:10px;margin-top:12px}
+      #salaryPinModal button{flex:1;min-height:44px;border:0;border-radius:10px;font-weight:800;cursor:pointer}
+      #salaryPinModal .salary-pin-cancel{background:#2b3153;color:#fff}
+      #salaryPinModal .salary-pin-submit{background:#8e5cff;color:#fff}
       @media(max-width:700px){
         .salary-row-unlock{font-size:.94em;min-height:44px;justify-content:center}
         .salary-row-unlock .salary-unlock-line2{font-size:.72em;line-height:1.15}
@@ -56,7 +70,6 @@
     if(!form)return;
     const grid=form.querySelector('.manager-grid');
     if(!grid)return;
-
     if(!document.getElementById('weeklySalary')){
       const label=document.createElement('label');
       label.setAttribute('data-weekly-salary-field','true');
@@ -67,7 +80,6 @@
       else if(notes)grid.insertBefore(label,notes);
       else grid.appendChild(label);
     }
-
     if(!document.getElementById('hostSalaryPin')){
       const pinLabel=document.createElement('label');
       pinLabel.className='salary-pin-field';
@@ -79,222 +91,127 @@
     }
   }
 
-  async function ownerToken(){
-    try{return typeof getOwnerAccessToken==='function'?await getOwnerAccessToken():null;}catch(_){return null;}
+  function ensurePinModal(){
+    ensureStyles();
+    let modal=document.getElementById('salaryPinModal');
+    if(modal)return modal;
+    modal=document.createElement('div');
+    modal.id='salaryPinModal';
+    modal.hidden=true;
+    modal.innerHTML=`<div class="salary-pin-card" role="dialog" aria-modal="true"><h3>Enter Salary PIN</h3><p id="salaryPinHost"></p><input id="salaryPinInput" type="password" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="off" placeholder="••••••"><div id="salaryPinError" class="salary-pin-error"></div><div class="salary-pin-actions"><button type="button" class="salary-pin-cancel">Cancel</button><button type="button" class="salary-pin-submit">View Salary</button></div></div>`;
+    document.body.appendChild(modal);
+    return modal;
   }
+
+  function requestPin(host){
+    if(!isMobile())return Promise.resolve(window.prompt(`Enter the 6-digit Salary PIN for ${host.stage}:`));
+    const modal=ensurePinModal();
+    const input=modal.querySelector('#salaryPinInput');
+    const error=modal.querySelector('#salaryPinError');
+    const submit=modal.querySelector('.salary-pin-submit');
+    const cancel=modal.querySelector('.salary-pin-cancel');
+    modal.querySelector('#salaryPinHost').textContent=`${host.stage} — enter the 6-digit PIN once to reveal all weekly salaries.`;
+    input.value='';error.textContent='';submit.disabled=false;submit.textContent='View Salary';modal.hidden=false;
+    return new Promise(resolve=>{
+      let settled=false;
+      const finish=value=>{if(settled)return;settled=true;modal.hidden=true;input.onkeydown=null;submit.onclick=null;cancel.onclick=null;modal.onclick=null;resolve(value);};
+      submit.onclick=()=>finish(input.value);
+      cancel.onclick=()=>finish(null);
+      modal.onclick=e=>{if(e.target===modal)finish(null);};
+      input.onkeydown=e=>{if(e.key==='Enter'){e.preventDefault();finish(input.value);}};
+      setTimeout(()=>input.focus(),60);
+    });
+  }
+
+  async function ownerToken(){try{return typeof getOwnerAccessToken==='function'?await getOwnerAccessToken():null;}catch(_){return null;}}
 
   async function loadSalaryForOpenWeek(){
     ensureSalaryField();
-    const input=document.getElementById('weeklySalary');
-    if(!input)return;
-    input.value='';
-    const pin=document.getElementById('hostSalaryPin');
-    if(pin)pin.value='';
+    const input=document.getElementById('weeklySalary');if(!input)return;
+    input.value='';const pin=document.getElementById('hostSalaryPin');if(pin)pin.value='';
     try{
       if(typeof currentPerfHost==='undefined'||currentPerfHost<0||typeof hosts==='undefined')return;
-      const host=hosts[currentPerfHost];
-      const weekKey=document.getElementById('perfWeek')?.value||'';
-      if(!host?.id||!weekKey)return;
-      const token=await ownerToken();
-      if(!token)return;
+      const host=hosts[currentPerfHost];const weekKey=document.getElementById('perfWeek')?.value||'';if(!host?.id||!weekKey)return;
+      const token=await ownerToken();if(!token)return;
       const url=`${SUPABASE_URL}/rest/v1/host_weekly_records?host_id=eq.${encodeURIComponent(host.id)}&week_key=eq.${encodeURIComponent(weekKey)}&select=weekly_salary,updated_at&order=updated_at.desc&limit=1`;
-      const r=await previousFetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${token}`}});
-      if(!r.ok)return;
-      const rows=await r.json();
-      const value=rows?.[0]?.[SALARY_FIELD];
-      input.value=(value===null||value===undefined||value==='')?'':String(value);
+      const r=await previousFetch(url,{headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${token}`}});if(!r.ok)return;
+      const rows=await r.json();const value=rows?.[0]?.[SALARY_FIELD];input.value=(value===null||value===undefined||value==='')?'':String(value);
     }catch(err){console.warn('[Twin Arc] Could not load owner weekly salary.',err);}
   }
 
   async function saveHostSalaryPin(pin){
     try{
-      if(!/^\d{6}$/.test(pin||'')){
-        const msg=document.getElementById('perfMessage');if(msg)msg.textContent='Salary PIN must be exactly 6 digits.';
-        return false;
-      }
+      if(!/^\d{6}$/.test(pin||'')){const msg=document.getElementById('perfMessage');if(msg)msg.textContent='Salary PIN must be exactly 6 digits.';return false;}
       if(typeof currentPerfHost==='undefined'||currentPerfHost<0||!hosts?.[currentPerfHost]?.id)return false;
-      const token=await ownerToken();
-      if(!token)return false;
-      const r=await previousFetch(`${SUPABASE_URL}/rest/v1/rpc/set_host_salary_pin`,{
-        method:'POST',
-        headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${token}`,'Content-Type':'application/json'},
-        body:JSON.stringify({p_host_id:hosts[currentPerfHost].id,p_pin:pin})
-      });
+      const token=await ownerToken();if(!token)return false;
+      const r=await previousFetch(`${SUPABASE_URL}/rest/v1/rpc/set_host_salary_pin`,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({p_host_id:hosts[currentPerfHost].id,p_pin:pin})});
       if(!r.ok)throw new Error(await r.text());
       const msg=document.getElementById('perfMessage');if(msg)msg.textContent='Weekly record saved. Host salary PIN updated.';
-      const el=document.getElementById('hostSalaryPin');if(el)el.value='';
-      return true;
-    }catch(err){
-      console.warn('[Twin Arc] Could not update salary PIN.',err);
-      const msg=document.getElementById('perfMessage');if(msg)msg.textContent='Weekly record saved, but salary PIN could not be updated.';
-      return false;
-    }
+      const el=document.getElementById('hostSalaryPin');if(el)el.value='';return true;
+    }catch(err){console.warn('[Twin Arc] Could not update salary PIN.',err);const msg=document.getElementById('perfMessage');if(msg)msg.textContent='Weekly record saved, but salary PIN could not be updated.';return false;}
   }
 
-  function salaryRowLabel(){
-    return salariesRevealed
-      ? '<button type="button" class="salary-row-unlock" data-toggle-all-salaries><span>Weekly Salary /</span><span class="salary-unlock-line2">Tap to HIDE 🔓</span></button>'
-      : '<button type="button" class="salary-row-unlock" data-toggle-all-salaries><span>Weekly Salary /</span><span class="salary-unlock-line2">Enter PIN to VIEW 🔒</span></button>';
-  }
+  function salaryRowLabel(){return salariesRevealed?'<button type="button" class="salary-row-unlock" data-toggle-all-salaries><span>Weekly Salary /</span><span class="salary-unlock-line2">Tap to HIDE 🔓</span></button>':'<button type="button" class="salary-row-unlock" data-toggle-all-salaries><span>Weekly Salary /</span><span class="salary-unlock-line2">Enter PIN to VIEW 🔒</span></button>';}
 
   function bindSalaryButton(scope){
-    const btn=scope?.querySelector?.('[data-toggle-all-salaries]');
-    if(!btn||btn.dataset.salaryBound==='1')return;
-    btn.dataset.salaryBound='1';
-    let lastTouchAt=0;
-
-    btn.addEventListener('touchend',function(e){
-      lastTouchAt=Date.now();
-      e.preventDefault();
-      e.stopPropagation();
-      unlockAllSalaries(btn);
-    },{passive:false});
-
-    btn.addEventListener('click',function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      if(Date.now()-lastTouchAt<800)return;
-      unlockAllSalaries(btn);
-    });
+    const btn=scope?.querySelector?.('[data-toggle-all-salaries]');if(!btn||btn.dataset.salaryBound==='1')return;
+    btn.dataset.salaryBound='1';let lastTouchAt=0;
+    btn.addEventListener('touchend',function(e){lastTouchAt=Date.now();e.preventDefault();e.stopPropagation();unlockAllSalaries(btn);},{passive:false});
+    btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(Date.now()-lastTouchAt<800)return;unlockAllSalaries(btn);});
   }
 
   function renderPrivateSalaryRow(){
-    const myVersion=++salaryRenderVersion;
-    const body=document.getElementById('quotaBody');
-    if(!body)return;
-    const hostId=currentHostId();
-    if(revealedHostId&&hostId!==revealedHostId)resetSalaryReveal();
+    const myVersion=++salaryRenderVersion;const body=document.getElementById('quotaBody');if(!body)return;
+    const hostId=currentHostId();if(revealedHostId&&hostId!==revealedHostId)resetSalaryReveal();
     if(myVersion!==salaryRenderVersion||!document.body.contains(body))return;
     body.querySelectorAll('.weekly-salary-row').forEach(el=>el.remove());
     const d=(typeof getHostData==='function'&&typeof currentPerfHost!=='undefined'&&currentPerfHost>=0)?getHostData():{records:{}};
-    const tr=document.createElement('tr');
-    tr.className='weekly-salary-row';
-    tr.innerHTML=`<th class="row-title">${salaryRowLabel()}</th>${[0,1,2,3,4].map(i=>{
-      const key='slot'+i,hasRecord=!!d.records?.[key];
-      if(!hasRecord)return `<td class="week-cell" data-salary-slot="${i}">-</td>`;
-      if(salariesRevealed)return `<td class="week-cell" data-salary-slot="${i}"><span class="salary-revealed">${formatSalary(revealedSalaryValues[key])}</span></td>`;
-      return `<td class="week-cell" data-salary-slot="${i}"><span class="salary-masked">••••</span></td>`;
-    }).join('')}`;
-    const statusRow=Array.from(body.querySelectorAll('tr')).find(row=>row.querySelector('.row-title')?.textContent?.trim()==='Status');
-    if(statusRow)body.insertBefore(tr,statusRow);else body.appendChild(tr);
-    bindSalaryButton(tr);
+    const tr=document.createElement('tr');tr.className='weekly-salary-row';
+    tr.innerHTML=`<th class="row-title">${salaryRowLabel()}</th>${[0,1,2,3,4].map(i=>{const key='slot'+i,hasRecord=!!d.records?.[key];if(!hasRecord)return `<td class="week-cell" data-salary-slot="${i}">-</td>`;if(salariesRevealed)return `<td class="week-cell" data-salary-slot="${i}"><span class="salary-revealed">${formatSalary(revealedSalaryValues[key])}</span></td>`;return `<td class="week-cell" data-salary-slot="${i}"><span class="salary-masked">••••</span></td>`;}).join('')}`;
+    const statusRow=Array.from(body.querySelectorAll('tr')).find(row=>row.querySelector('.row-title')?.textContent?.trim()==='Status');if(statusRow)body.insertBefore(tr,statusRow);else body.appendChild(tr);bindSalaryButton(tr);
   }
 
   async function verifySalaryForSlot(hostId,key,pin){
-    const r=await previousFetch(`${SUPABASE_URL}/rest/v1/rpc/verify_host_weekly_salary`,{
-      method:'POST',
-      headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},
-      body:JSON.stringify({p_host_id:hostId,p_month_year:'',p_week_key:key,p_pin:pin})
-    });
-    if(!r.ok)throw new Error(await r.text());
-    return r.json();
+    const r=await previousFetch(`${SUPABASE_URL}/rest/v1/rpc/verify_host_weekly_salary`,{method:'POST',headers:{apikey:SUPABASE_KEY,Authorization:`Bearer ${SUPABASE_KEY}`,'Content-Type':'application/json'},body:JSON.stringify({p_host_id:hostId,p_month_year:'',p_week_key:key,p_pin:pin})});
+    if(!r.ok)throw new Error(await r.text());return r.json();
   }
 
   async function unlockAllSalaries(button){
+    if(salaryBusy)return;
     try{
       if(typeof currentPerfHost==='undefined'||currentPerfHost<0||!hosts?.[currentPerfHost]?.id)return;
-      const host=hosts[currentPerfHost];
-      const hostId=String(host.id);
+      const host=hosts[currentPerfHost];const hostId=String(host.id);
       if(revealedHostId&&revealedHostId!==hostId)resetSalaryReveal();
-      if(salariesRevealed){
-        resetSalaryReveal();
-        renderPrivateSalaryRow();
-        return;
-      }
-
-      const d=(typeof getHostData==='function')?getHostData():{records:{}};
-      const slots=[0,1,2,3,4].filter(i=>!!d.records?.['slot'+i]);
+      if(salariesRevealed){resetSalaryReveal();renderPrivateSalaryRow();return;}
+      const d=(typeof getHostData==='function')?getHostData():{records:{}};const slots=[0,1,2,3,4].filter(i=>!!d.records?.['slot'+i]);
       if(!slots.length){alert('No weekly salary records are available yet.');return;}
-
-      const pin=window.prompt(`Enter the 6-digit Salary PIN for ${host.stage}:`);
-      if(pin===null)return;
-      const cleanPin=pin.trim();
-      if(!/^\d{6}$/.test(cleanPin)){alert('Please enter a valid 6-digit PIN.');return;}
-
-      button.disabled=true;
-      const line2=button.querySelector('.salary-unlock-line2');
-      if(line2)line2.textContent='Checking PIN…';
-
+      salaryBusy=true;
+      const pin=await requestPin(host);if(pin===null){salaryBusy=false;return;}
+      const cleanPin=String(pin).trim();if(!/^\d{6}$/.test(cleanPin)){salaryBusy=false;alert('Please enter a valid 6-digit PIN.');return;}
+      if(button&&document.body.contains(button)){button.disabled=true;const line2=button.querySelector('.salary-unlock-line2');if(line2)line2.textContent='Checking PIN…';}
       const values={};
       for(const i of slots){
-        const key='slot'+i;
-        const result=await verifySalaryForSlot(host.id,key,cleanPin);
-        if(!result?.ok){
-          if(result?.error==='wrong_pin')alert('Incorrect PIN.');
-          else if(result?.error==='locked')alert('Too many incorrect attempts. Salary access is temporarily locked for 10 minutes.');
-          else if(result?.error==='pin_not_set')alert('No Salary PIN has been set for this host yet.');
-          else alert('Unable to unlock the weekly salaries.');
-          renderPrivateSalaryRow();
-          return;
-        }
+        const key='slot'+i;const result=await verifySalaryForSlot(host.id,key,cleanPin);
+        if(!result?.ok){salaryBusy=false;if(result?.error==='wrong_pin')alert('Incorrect PIN.');else if(result?.error==='locked')alert('Too many incorrect attempts. Salary access is temporarily locked for 10 minutes.');else if(result?.error==='pin_not_set')alert('No Salary PIN has been set for this host yet.');else alert('Unable to unlock the weekly salaries.');renderPrivateSalaryRow();return;}
         values[key]=result.salary;
       }
-
-      revealedSalaryValues=values;
-      salariesRevealed=true;
-      revealedHostId=hostId;
-      renderPrivateSalaryRow();
-    }catch(err){
-      console.warn('[Twin Arc] Salary PIN verification failed.',err);
-      alert('Could not verify the PIN right now.');
-      renderPrivateSalaryRow();
-    }
+      if(currentHostId()!==hostId){salaryBusy=false;return;}
+      revealedSalaryValues=values;salariesRevealed=true;revealedHostId=hostId;salaryBusy=false;renderPrivateSalaryRow();
+    }catch(err){salaryBusy=false;console.warn('[Twin Arc] Salary PIN verification failed.',err);alert('Could not verify the PIN right now.');renderPrivateSalaryRow();}
   }
 
-  window.fetch=async function(input,init){
-    try{
-      const url=typeof input==='string'?input:(input?.url||'');
-      if(url.includes('/rest/v1/host_weekly_records')&&String(init?.method||'GET').toUpperCase()==='POST'&&init?.body){
-        const payload=JSON.parse(init.body);
-        const salaryEl=document.getElementById('weeklySalary');
-        payload[SALARY_FIELD]=salaryEl?moneyNumber(salaryEl.value):null;
-        init={...init,body:JSON.stringify(payload)};
-      }
-    }catch(err){console.warn('[Twin Arc] Weekly salary save patch skipped.',err);}
-    return previousFetch(input,init);
-  };
+  window.__twinArcMobileSalaryToggle=function(){const btn=document.querySelector('#performance [data-toggle-all-salaries]');if(btn)unlockAllSalaries(btn);};
+
+  window.fetch=async function(input,init){try{const url=typeof input==='string'?input:(input?.url||'');if(url.includes('/rest/v1/host_weekly_records')&&String(init?.method||'GET').toUpperCase()==='POST'&&init?.body){const payload=JSON.parse(init.body);const salaryEl=document.getElementById('weeklySalary');payload[SALARY_FIELD]=salaryEl?moneyNumber(salaryEl.value):null;init={...init,body:JSON.stringify(payload)};}}catch(err){console.warn('[Twin Arc] Weekly salary save patch skipped.',err);}return previousFetch(input,init);};
 
   ensureSalaryField();
+  if(typeof openWeekEditor==='function'){const originalOpenWeekEditor=openWeekEditor;openWeekEditor=function(i){originalOpenWeekEditor(i);ensureSalaryField();loadSalaryForOpenWeek();};}
+  if(typeof renderQuotaSheet==='function'){const originalRenderQuotaSheet=renderQuotaSheet;renderQuotaSheet=function(){originalRenderQuotaSheet();const hostId=currentHostId();if(revealedHostId&&revealedHostId!==hostId)resetSalaryReveal();renderPrivateSalaryRow();};}
 
-  if(typeof openWeekEditor==='function'){
-    const originalOpenWeekEditor=openWeekEditor;
-    openWeekEditor=function(i){originalOpenWeekEditor(i);ensureSalaryField();loadSalaryForOpenWeek();};
-  }
+  function refreshSalaryAfterNavigation(){salaryBusy=false;resetSalaryReveal();const modal=document.getElementById('salaryPinModal');if(modal)modal.hidden=true;setTimeout(()=>{ensureSalaryField();renderPrivateSalaryRow();},80);setTimeout(renderPrivateSalaryRow,320);}
+  window.addEventListener('popstate',refreshSalaryAfterNavigation);window.addEventListener('pageshow',e=>{if(e.persisted)refreshSalaryAfterNavigation();});window.addEventListener('hashchange',()=>setTimeout(refreshSalaryAfterNavigation,30));
 
-  if(typeof renderQuotaSheet==='function'){
-    const originalRenderQuotaSheet=renderQuotaSheet;
-    renderQuotaSheet=function(){
-      originalRenderQuotaSheet();
-      resetSalaryReveal();
-      renderPrivateSalaryRow();
-    };
-  }
-
-  function refreshSalaryAfterNavigation(){
-    resetSalaryReveal();
-    setTimeout(()=>{ensureSalaryField();renderPrivateSalaryRow();},80);
-    setTimeout(renderPrivateSalaryRow,320);
-  }
-  window.addEventListener('popstate',refreshSalaryAfterNavigation);
-  window.addEventListener('pageshow',e=>{if(e.persisted)refreshSalaryAfterNavigation();});
-  window.addEventListener('hashchange',()=>setTimeout(refreshSalaryAfterNavigation,30));
-
-  const pageObserver=new MutationObserver(()=>{
-    const body=document.getElementById('quotaBody');
-    if(body&&!body.querySelector('.weekly-salary-row'))renderPrivateSalaryRow();
-  });
-  pageObserver.observe(document.body,{childList:true,subtree:true});
-
-  const form=document.getElementById('weeklyRecordForm');
-  if(form){
-    const observer=new MutationObserver(()=>ensureSalaryField());
-    observer.observe(form,{childList:true,subtree:true});
-    form.addEventListener('submit',()=>{
-      const pin=document.getElementById('hostSalaryPin')?.value?.trim()||'';
-      if(pin)setTimeout(()=>saveHostSalaryPin(pin),120);
-      setTimeout(renderPrivateSalaryRow,450);
-    },true);
-  }
-
+  const pageObserver=new MutationObserver(()=>{const body=document.getElementById('quotaBody');if(body&&!body.querySelector('.weekly-salary-row'))renderPrivateSalaryRow();});pageObserver.observe(document.body,{childList:true,subtree:true});
+  const form=document.getElementById('weeklyRecordForm');if(form){const observer=new MutationObserver(()=>ensureSalaryField());observer.observe(form,{childList:true,subtree:true});form.addEventListener('submit',()=>{const pin=document.getElementById('hostSalaryPin')?.value?.trim()||'';if(pin)setTimeout(()=>saveHostSalaryPin(pin),120);setTimeout(renderPrivateSalaryRow,450);},true);}
   setTimeout(renderPrivateSalaryRow,300);
 })();
