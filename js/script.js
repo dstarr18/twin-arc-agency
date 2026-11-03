@@ -1,5 +1,28 @@
 // Twin Arc Preview loader: approved V11 source + cloud host persistence + verified cloud events.
 (function(){
+  // Finalize the header brand immediately so mobile never sees the local-logo / one-line
+  // placeholder change later when cloud/editor scripts finish loading.
+  try{
+    const brand=document.querySelector('.brand');
+    if(brand){
+      const img=brand.querySelector('img');
+      if(img){
+        img.src='https://uhcfsdsdlqcqadkhlzkg.supabase.co/storage/v1/object/public/site-branding/agency-logo-1793499279553.png';
+        img.style.transform='scale(1)';
+        img.style.transformOrigin='center center';
+        img.style.transition='none';
+      }
+      let copy=brand.querySelector('.brand-copy');
+      if(!copy){
+        const old=brand.querySelector('span');
+        if(old)old.remove();
+        copy=document.createElement('span');
+        copy.className='brand-copy';
+        copy.innerHTML='<span class="brand-main">TWIN ARC</span><span class="brand-sub">AGENCY</span>';
+        brand.appendChild(copy);
+      }
+    }
+  }catch(err){console.warn('[Twin Arc] Early header brand stabilization skipped.',err);}
   if(!document.querySelector('link[data-twin-arc-event-uniform]')){
     const css=document.createElement('link');css.rel='stylesheet';css.href='css/event-card-uniform.css';css.setAttribute('data-twin-arc-event-uniform','true');document.head.appendChild(css);
   }
