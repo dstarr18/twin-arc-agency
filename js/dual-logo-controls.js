@@ -2,6 +2,7 @@
 (function(){
   const API='https://uhcfsdsdlqcqadkhlzkg.supabase.co';
   const KEY='sb_publishable_1tdi3y-UoBBnHKFsW1MFcw_vyRBbdgA';
+  const CACHE_KEY='twinArcHeaderLogoState';
   let state={header_logo_url:null,header_logo_scale:1,hero_logo_url:null,hero_logo_scale:1};
   let headerPreviewUrl=null, heroPreviewUrl=null;
 
@@ -9,21 +10,24 @@
   const clamp=n=>Math.min(1.8,Math.max(.45,Number(n)||1));
   const ownerUnlocked=()=>document.getElementById('adminModeBtn')?.classList.contains('is-unlocked')===true;
 
+  function cacheHeaderState(){
+    try{localStorage.setItem(CACHE_KEY,JSON.stringify({url:state.header_logo_url||null,scale:clamp(state.header_logo_scale)}));}catch(_){ }
+  }
+
   function applyLogo(selector,url,scale){
     if(!url)return;
     document.querySelectorAll(selector).forEach(img=>{
       img.src=url;
-      img.style.transform=`scale(${clamp(scale)})`;
-      img.style.transformOrigin='center center';
-      img.style.transition='transform .18s ease';
+      img.style.setProperty('transform',`scale(${clamp(scale)})`);
+      img.style.setProperty('transform-origin','center center');
+      img.style.setProperty('transition','none','important');
     });
   }
 
   function applyState(){
     applyLogo('.brand img',state.header_logo_url,state.header_logo_scale);
+    cacheHeaderState();
     // Keep the Home hero on the original local image already present in index.html.
-    // The cloud-saved hero image has transparent padding and visually shrinks after load.
-    // Do not replace .logo-wrap img at runtime.
     updatePreview('header');
     updatePreview('hero');
   }
@@ -54,7 +58,7 @@
       .dual-logo-card p{margin:0 0 12px;color:#aaa6bb;font-size:11px;line-height:1.45}
       .dual-logo-card input[type=file]{width:100%;margin:0 0 10px}
       .dual-logo-preview-shell{width:100%;height:150px;display:grid;place-items:center;overflow:hidden;border-radius:12px;background:linear-gradient(135deg,#18162a,#080812);border:1px solid rgba(255,255,255,.13)}
-      .dual-logo-preview-shell img{max-width:72%;max-height:72%;object-fit:contain;transform-origin:center center;transition:transform .18s ease}
+      .dual-logo-preview-shell img{max-width:72%;max-height:72%;object-fit:contain;transform-origin:center center;transition:none}
       .dual-logo-zoom{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;margin-top:10px}
       .dual-logo-zoom input[type=range]{margin:0;padding:0;background:transparent;border:0;box-shadow:none}
       .dual-logo-zoom button{width:34px;height:34px;border-radius:9px;border:1px solid rgba(174,128,255,.45);background:rgba(92,45,190,.18);color:#fff;font-size:20px;cursor:pointer}
@@ -81,6 +85,7 @@
     const key=kind==='header'?'header_logo_scale':'hero_logo_scale';
     state[key]=clamp(value);
     updatePreview(kind);
+    if(kind==='header')applyLogo('.brand img',state.header_logo_url,state.header_logo_scale);
   }
 
   function bindKind(kind){
@@ -103,13 +108,11 @@
     if(!original||!grid||$('dualLogoGrid'))return false;
     const originalLabel=original.closest('label');
     if(originalLabel)originalLabel.style.display='none';
-
     const wrap=document.createElement('div');
     wrap.id='dualLogoGrid';wrap.className='dual-logo-grid';
     wrap.innerHTML=card('header','Header Logo','Small logo beside TWIN ARC / AGENCY in the top navigation.')+card('hero','Home/Main Logo','Large logo shown at the top of the Home section.');
     grid.insertBefore(wrap,grid.firstChild);
     bindKind('header');bindKind('hero');updatePreview('header');updatePreview('hero');
-
     $('siteContentForm').addEventListener('submit',saveSeparateLogos,true);
     return true;
   }
@@ -135,13 +138,7 @@
       const [headerUploaded,heroUploaded]=await Promise.all([upload(hFile,token,'header'),upload(heroFile,token,'home')]);
       if(headerUploaded)state.header_logo_url=headerUploaded;
       if(heroUploaded)state.hero_logo_url=heroUploaded;
-      const payload={
-        header_logo_url:state.header_logo_url,
-        header_logo_scale:state.header_logo_scale,
-        hero_logo_url:state.hero_logo_url,
-        hero_logo_scale:state.hero_logo_scale,
-        updated_at:new Date().toISOString()
-      };
+      const payload={header_logo_url:state.header_logo_url,header_logo_scale:state.header_logo_scale,hero_logo_url:state.hero_logo_url,hero_logo_scale:state.hero_logo_scale,updated_at:new Date().toISOString()};
       const r=await fetch(`${API}/rest/v1/site_content?id=eq.1`,{method:'PATCH',headers:{apikey:KEY,Authorization:`Bearer ${token}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});
       if(!r.ok)throw new Error(await r.text());
       applyState();
@@ -152,6 +149,5 @@
     injectStyles();loadState();
     let tries=0;const timer=setInterval(()=>{tries++;if(enhanceEditor()||tries>100)clearInterval(timer);},100);
   }
-
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot);else boot();
 })();
