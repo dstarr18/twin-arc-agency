@@ -26,8 +26,8 @@
 
   function applyState(){
     applyLogo('.brand img',state.header_logo_url,state.header_logo_scale);
+    applyLogo('.logo-wrap img',state.hero_logo_url,state.hero_logo_scale);
     cacheHeaderState();
-    // Keep the Home hero on the original local image already present in index.html.
     updatePreview('header');
     updatePreview('hero');
   }
@@ -86,6 +86,7 @@
     state[key]=clamp(value);
     updatePreview(kind);
     if(kind==='header')applyLogo('.brand img',state.header_logo_url,state.header_logo_scale);
+    else applyLogo('.logo-wrap img',state.hero_logo_url,state.hero_logo_scale);
   }
 
   function bindKind(kind){
