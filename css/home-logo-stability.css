@@ -25,7 +25,10 @@
   transition:none !important;
 }
 
-/* Header logo: never allow saved zoom/inline transition to make it jump after load. */
+/* Header logo keeps a fixed box so layout never jumps, but its image may zoom inside it. */
+.brand{
+  overflow:visible !important;
+}
 .brand img{
   width:58px !important;
   height:48px !important;
@@ -34,7 +37,7 @@
   min-height:48px !important;
   max-height:48px !important;
   object-fit:contain !important;
-  transform:none !important;
+  transform-origin:center center !important;
   transition:none !important;
 }
 
