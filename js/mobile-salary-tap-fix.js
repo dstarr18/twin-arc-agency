@@ -166,16 +166,20 @@
     return true;
   }
 
-  document.addEventListener('touchend',function(e){
-    if(!e.changedTouches||e.changedTouches.length!==1)return;
-    const t=e.changedTouches[0];handleSalaryTap(e,t.clientX,t.clientY);
-  },{capture:true,passive:false});
-
-  // Pointer fallback for mobile browsers that emit pointer events more reliably than touch events.
-  document.addEventListener('pointerup',function(e){
-    if(e.pointerType!=='touch')return;
-    handleSalaryTap(e,e.clientX,e.clientY);
-  },{capture:true,passive:false});
+  // Use exactly one mobile event path. iPhone Safari can emit both touchend and
+  // pointerup for the same physical tap; handling both caused HIDE to immediately
+  // become VIEW and reopen the PIN modal on the duplicate event.
+  if(window.PointerEvent){
+    document.addEventListener('pointerup',function(e){
+      if(e.pointerType!=='touch')return;
+      handleSalaryTap(e,e.clientX,e.clientY);
+    },{capture:true,passive:false});
+  }else{
+    document.addEventListener('touchend',function(e){
+      if(!e.changedTouches||e.changedTouches.length!==1)return;
+      const t=e.changedTouches[0];handleSalaryTap(e,t.clientX,t.clientY);
+    },{capture:true,passive:false});
+  }
 
   function cleanupAfterNavigation(){
     closeModal();
