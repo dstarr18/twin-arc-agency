@@ -28,7 +28,13 @@
     if(colon)return Number(colon[1])+Number(colon[2])/60;
     const hm=raw.match(/^(\d+(?:\.\d+)?)\s*(?:h|hr|hrs|hour|hours)(?:\s*(\d+(?:\.\d+)?)\s*(?:m|min|mins|minute|minutes))?$/);
     if(hm)return Number(hm[1])+(hm[2]?Number(hm[2])/60:0);
-    return parsePlainNumber(raw);
+    return parsePlainNumber(raw)/60; // A plain number in this editor means minutes.
+  }
+  function hoursToMinutes(value){return Math.round((Number(value)||0)*60);}
+  function formatHours(value){
+    const minutes=hoursToMinutes(value);
+    const h=Math.floor(minutes/60),m=minutes%60;
+    return h?`${h}h${m?' '+m+'m':''}`:`${m}m`;
   }
 
   function ensureEditorField(){
@@ -36,6 +42,22 @@
     const weeklyMonth=document.getElementById('weeklyMonth');
     if(weeklyMonth){weeklyMonth.readOnly=false;weeklyMonth.removeAttribute('pattern');weeklyMonth.placeholder='e.g. Oct-Nov 2026';weeklyMonth.title='Dashboard label only — weeks remain together';const label=weeklyMonth.closest('label');if(label&&label.firstChild)label.firstChild.textContent='Dashboard Month / Year';}
     ['weeklyCoins','weeklyDays','weeklyHours'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.type='text';el.inputMode='decimal';el.placeholder='0 or -';el.removeAttribute('min');el.removeAttribute('max');el.removeAttribute('step');el.setAttribute('autocomplete','off');});
+    const hoursInput=document.getElementById('weeklyHours');
+    if(hoursInput){
+      hoursInput.placeholder='e.g. 150 (2h 30m)';
+      hoursInput.inputMode='numeric';
+      const hoursLabel=hoursInput.closest('label');
+      if(hoursLabel&&hoursLabel.firstChild)hoursLabel.firstChild.textContent='Streaming Time (Minutes)';
+      if(!document.getElementById('streamMinutesPreview')){
+        const hint=document.createElement('small');hint.id='streamMinutesPreview';
+        hint.style.cssText='display:block;margin-top:4px;color:#d8b8ff;font-size:12px';
+        hoursInput.insertAdjacentElement('afterend',hint);
+        hoursInput.addEventListener('input',()=>{
+          const v=hoursInput.value.trim();
+          hint.textContent=v===''||v==='-'?'':('Converts to '+formatHours(parseHoursValue(v)));
+        });
+      }
+    }
     if(!document.getElementById('weeklyActivityStatus')){const grid=form.querySelector('.manager-grid');if(grid){const label=document.createElement('label');label.innerHTML='Weekly Activity Status<select id="weeklyActivityStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select>';const notes=grid.querySelector('label.full');if(notes)grid.insertBefore(label,notes);else grid.appendChild(label);}}
   }
   function currentKey(){return document.getElementById('perfWeek')?.value||'';}
@@ -79,9 +101,18 @@
   }
 
   ensureEditorField();
-  if(typeof openWeekEditor==='function'){const originalOpenWeekEditor=openWeekEditor;openWeekEditor=function(i){originalOpenWeekEditor(i);ensureEditorField();const d=typeof getHostData==='function'?getHostData():null,key='slot'+i,r=d?.records?.[key];const monthInput=document.getElementById('weeklyMonth');if(monthInput)monthInput.value=d?.month||document.getElementById('perfMonth')?.value||'';const select=document.getElementById('weeklyActivityStatus');if(select)select.value=r?.activityStatus==='Inactive'?'Inactive':'Active';if(r){if(r.coinsDisplay==='-')document.getElementById('weeklyCoins').value='-';if(r.daysDisplay==='-')document.getElementById('weeklyDays').value='-';if(r.hoursDisplay==='-')document.getElementById('weeklyHours').value='-';}};}
+  if(typeof openWeekEditor==='function'){const originalOpenWeekEditor=openWeekEditor;openWeekEditor=function(i){originalOpenWeekEditor(i);ensureEditorField();const d=typeof getHostData==='function'?getHostData():null,key='slot'+i,r=d?.records?.[key];const monthInput=document.getElementById('weeklyMonth');if(monthInput)monthInput.value=d?.month||document.getElementById('perfMonth')?.value||'';const select=document.getElementById('weeklyActivityStatus');if(select)select.value=r?.activityStatus==='Inactive'?'Inactive':'Active';if(r){if(r.coinsDisplay==='-')document.getElementById('weeklyCoins').value='-';if(r.daysDisplay==='-')document.getElementById('weeklyDays').value='-';if(r.hoursDisplay==='-')document.getElementById('weeklyHours').value='-';else document.getElementById('weeklyHours').value=String(hoursToMinutes(r.hours));
+      }else document.getElementById('weeklyHours').value='';
+      const input=document.getElementById('weeklyHours');input?.dispatchEvent(new Event('input',{bubbles:false}));
+    };}
 
-  if(typeof renderQuotaSheet==='function'){const originalRenderQuotaSheet=renderQuotaSheet;let rendering=false;renderQuotaSheet=function(){if(rendering)return;rendering=true;try{originalRenderQuotaSheet();const body=document.getElementById('quotaBody');if(!body||typeof getHostData!=='function')return;body.querySelectorAll('.weekly-activity-row').forEach(x=>x.remove());const d=currentPerfHost>=0?getHostData():{headers:['','','','',''],records:{}};const rowMap={'Coins Received':'coinsDisplay','Streaming Days':'daysDisplay','Streaming Hours':'hoursDisplay'};Object.entries(rowMap).forEach(([title,prop])=>{const row=Array.from(body.querySelectorAll('tr')).find(x=>x.querySelector('.row-title')?.textContent===title);if(!row)return;Array.from(row.querySelectorAll('[data-slot]')).forEach((cell,i)=>{if(d.records?.['slot'+i]?.[prop]==='-')cell.textContent='-';});});const tr=document.createElement('tr');tr.className='weekly-activity-row';tr.innerHTML=`<th class="row-title">Weekly Activity</th>${(d.headers||[]).map((h,i)=>{const r=d.records['slot'+i];if(!r)return '<td class="week-cell" data-slot="'+i+'"></td>';const st=r.activityStatus==='Inactive'?'Inactive':'Active';return '<td class="week-cell '+(st==='Active'?'cell-ok':'cell-bad')+'" data-slot="'+i+'">'+st.toUpperCase()+'</td>';}).join('')}`;const statusRow=Array.from(body.querySelectorAll('tr')).find(row=>row.querySelector('.row-title')?.textContent==='Status');if(statusRow)body.insertBefore(tr,statusRow);else body.appendChild(tr);}finally{rendering=false;}};}
+  if(typeof renderQuotaSheet==='function'){const originalRenderQuotaSheet=renderQuotaSheet;let rendering=false;renderQuotaSheet=function(){if(rendering)return;rendering=true;try{originalRenderQuotaSheet();const body=document.getElementById('quotaBody');if(!body||typeof getHostData!=='function')return;body.querySelectorAll('.weekly-activity-row').forEach(x=>x.remove());const d=currentPerfHost>=0?getHostData():{headers:['','','','',''],records:{}};const rowMap={'Coins Received':'coinsDisplay','Streaming Days':'daysDisplay','Streaming Hours':'hoursDisplay'};Object.entries(rowMap).forEach(([title,prop])=>{const row=Array.from(body.querySelectorAll('tr')).find(x=>x.querySelector('.row-title')?.textContent===title);if(!row)return;Array.from(row.querySelectorAll('[data-slot]')).forEach((cell,i)=>{if(d.records?.['slot'+i]?.[prop]==='-')cell.textContent='-';});});const hourRow=Array.from(body.querySelectorAll('tr')).find(x=>x.querySelector('.row-title')?.textContent==='Streaming Hours');
+      if(hourRow)Array.from(hourRow.querySelectorAll('[data-slot]')).forEach((cell,i)=>{
+        const rec=d.records?.['slot'+i];if(rec&&rec.hoursDisplay!=='-')cell.textContent=formatHours(rec.hours);
+      });
+      const monthHours=document.getElementById('monthHours');
+      if(monthHours){let total=0;Object.values(d.records||{}).forEach(r=>{if(r)total+=Number(r.hours)||0;});monthHours.textContent=formatHours(total);}
+      const tr=document.createElement('tr');tr.className='weekly-activity-row';tr.innerHTML=`<th class="row-title">Weekly Activity</th>${(d.headers||[]).map((h,i)=>{const r=d.records['slot'+i];if(!r)return '<td class="week-cell" data-slot="'+i+'"></td>';const st=r.activityStatus==='Inactive'?'Inactive':'Active';return '<td class="week-cell '+(st==='Active'?'cell-ok':'cell-bad')+'" data-slot="'+i+'">'+st.toUpperCase()+'</td>';}).join('')}`;const statusRow=Array.from(body.querySelectorAll('tr')).find(row=>row.querySelector('.row-title')?.textContent==='Status');if(statusRow)body.insertBefore(tr,statusRow);else body.appendChild(tr);}finally{rendering=false;}};}
 
   if(typeof loadPerformanceForCurrentHost==='function'){loadPerformanceForCurrentHost=async function(){await loadAllWeeksForCurrentHost();};}
 
