@@ -5,7 +5,6 @@
   let salaryRenderVersion=0;
   let salariesRevealed=false;
   let revealedSalaryValues={};
-  let lastSalaryToggleAt=0;
   let revealedHostId=null;
 
   function moneyNumber(value){
@@ -138,6 +137,27 @@
       : '<button type="button" class="salary-row-unlock" data-toggle-all-salaries><span>Weekly Salary /</span><span class="salary-unlock-line2">Enter PIN to VIEW 🔒</span></button>';
   }
 
+  function bindSalaryButton(scope){
+    const btn=scope?.querySelector?.('[data-toggle-all-salaries]');
+    if(!btn||btn.dataset.salaryBound==='1')return;
+    btn.dataset.salaryBound='1';
+    let lastTouchAt=0;
+
+    btn.addEventListener('touchend',function(e){
+      lastTouchAt=Date.now();
+      e.preventDefault();
+      e.stopPropagation();
+      unlockAllSalaries(btn);
+    },{passive:false});
+
+    btn.addEventListener('click',function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      if(Date.now()-lastTouchAt<800)return;
+      unlockAllSalaries(btn);
+    });
+  }
+
   function renderPrivateSalaryRow(){
     const myVersion=++salaryRenderVersion;
     const body=document.getElementById('quotaBody');
@@ -157,6 +177,7 @@
     }).join('')}`;
     const statusRow=Array.from(body.querySelectorAll('tr')).find(row=>row.querySelector('.row-title')?.textContent?.trim()==='Status');
     if(statusRow)body.insertBefore(tr,statusRow);else body.appendChild(tr);
+    bindSalaryButton(tr);
   }
 
   async function verifySalaryForSlot(hostId,key,pin){
@@ -249,26 +270,6 @@
     };
   }
 
-  function handleSalaryToggleEvent(e){
-    const btn=e.target.closest?.('[data-toggle-all-salaries]');
-    if(!btn)return;
-    const now=Date.now();
-    if(now-lastSalaryToggleAt<350){e.preventDefault();e.stopPropagation();return;}
-    lastSalaryToggleAt=now;
-    e.preventDefault();
-    e.stopPropagation();
-    unlockAllSalaries(btn);
-  }
-
-  // Delegate from document so the salary lock survives mobile back/forward navigation
-  // and any dashboard/table DOM replacement.
-  if(window.PointerEvent){
-    document.addEventListener('pointerup',handleSalaryToggleEvent,true);
-  }else{
-    document.addEventListener('touchend',handleSalaryToggleEvent,{capture:true,passive:false});
-  }
-  document.addEventListener('click',handleSalaryToggleEvent,true);
-
   function refreshSalaryAfterNavigation(){
     resetSalaryReveal();
     setTimeout(()=>{ensureSalaryField();renderPrivateSalaryRow();},80);
@@ -276,6 +277,7 @@
   }
   window.addEventListener('popstate',refreshSalaryAfterNavigation);
   window.addEventListener('pageshow',e=>{if(e.persisted)refreshSalaryAfterNavigation();});
+  window.addEventListener('hashchange',()=>setTimeout(refreshSalaryAfterNavigation,30));
 
   const pageObserver=new MutationObserver(()=>{
     const body=document.getElementById('quotaBody');
