@@ -4,6 +4,9 @@
 (function(){
   let busy=false;
   let lastHandledAt=0;
+  let revealedCache=null;
+  let revealedCacheHostId=null;
+  let restoring=false;
 
   function isMobile(){
     return window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
@@ -90,7 +93,13 @@
     return r.json();
   }
 
+  function clearRevealCache(){
+    revealedCache=null;
+    revealedCacheHostId=null;
+  }
+
   function maskRow(){
+    clearRevealCache();
     const row=document.querySelector('#performance .weekly-salary-row');
     if(!row)return;
     const d=hostData();
@@ -103,9 +112,14 @@
     if(btn)btn.innerHTML='<span>Weekly Salary /</span><span class="salary-unlock-line2">Enter PIN to VIEW 🔒</span>';
   }
 
-  function revealRow(values){
+  function revealRow(values,remember=true){
     const row=document.querySelector('#performance .weekly-salary-row');
     if(!row)return;
+    const host=hostInfo();
+    if(remember&&host?.id){
+      revealedCache={...values};
+      revealedCacheHostId=String(host.id);
+    }
     const d=hostData();
     [0,1,2,3,4].forEach(i=>{
       const key='slot'+i;
@@ -147,7 +161,7 @@
           }
           values[key]=result.salary;
         }
-        revealRow(values);
+        revealRow(values,true);
         closeModal();
       }catch(err){
         console.warn('[Twin Arc] Mobile salary PIN verification failed.',err);
@@ -179,9 +193,6 @@
     return true;
   }
 
-  // Intercept BOTH touchend and pointerup at document capture level. iPhone can fire
-  // the legacy target touchend before a pointer-only fallback gets a chance to stop it.
-  // A short duplicate guard means only the first mobile event performs the action.
   document.addEventListener('touchend',function(e){
     if(!e.changedTouches||e.changedTouches.length!==1)return;
     const t=e.changedTouches[0];
@@ -193,8 +204,6 @@
     handleSalaryTap(e,e.clientX,e.clientY);
   },{capture:true,passive:false});
 
-  // Safari may synthesize a click afterward. Block it so weekly-salary.js cannot
-  // reach its legacy window.prompt() code path.
   document.addEventListener('click',function(e){
     if(!isMobile())return;
     const btn=e.target?.closest?.('[data-toggle-all-salaries]');
@@ -203,9 +212,27 @@
     e.stopImmediatePropagation();
   },true);
 
+  // The main salary module may rebuild the row after async navigation/data updates.
+  // If this host is still intentionally unlocked, restore the verified values so
+  // the row never appears to disappear or relock by itself.
+  const syncObserver=new MutationObserver(()=>{
+    if(restoring||!isMobile()||!revealedCache||!revealedCacheHostId)return;
+    const host=hostInfo();
+    if(!host?.id||String(host.id)!==revealedCacheHostId){clearRevealCache();return;}
+    const row=document.querySelector('#performance .weekly-salary-row');
+    const btn=row?.querySelector('[data-toggle-all-salaries]');
+    if(!row||!btn)return;
+    const alreadyRevealed=(btn.textContent||'').includes('HIDE')&&!!row.querySelector('.salary-revealed');
+    if(alreadyRevealed)return;
+    restoring=true;
+    try{revealRow(revealedCache,false);}finally{setTimeout(()=>{restoring=false;},0);}
+  });
+  syncObserver.observe(document.body,{childList:true,subtree:true});
+
   function cleanupAfterNavigation(){
     closeModal();
     lastHandledAt=0;
+    clearRevealCache();
     setTimeout(maskRow,160);
   }
   window.addEventListener('pageshow',cleanupAfterNavigation);
