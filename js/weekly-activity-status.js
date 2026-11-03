@@ -44,17 +44,31 @@
     ['weeklyCoins','weeklyDays','weeklyHours'].forEach(id=>{const el=document.getElementById(id);if(!el)return;el.type='text';el.inputMode='decimal';el.placeholder='0 or -';el.removeAttribute('min');el.removeAttribute('max');el.removeAttribute('step');el.setAttribute('autocomplete','off');});
     const hoursInput=document.getElementById('weeklyHours');
     if(hoursInput){
-      hoursInput.placeholder='e.g. 150 (2h 30m)';
-      hoursInput.inputMode='numeric';
+      hoursInput.placeholder='e.g. 150';
+      hoursInput.inputMode='decimal';
       const hoursLabel=hoursInput.closest('label');
       if(hoursLabel&&hoursLabel.firstChild)hoursLabel.firstChild.textContent='Streaming Time (Minutes)';
-      if(!document.getElementById('streamMinutesPreview')){
-        const hint=document.createElement('small');hint.id='streamMinutesPreview';
-        hint.style.cssText='display:block;margin-top:4px;color:#d8b8ff;font-size:12px';
-        hoursInput.insertAdjacentElement('afterend',hint);
+      let inline=document.getElementById('streamMinutesInlineWrap');
+      if(!inline){
+        inline=document.createElement('div');
+        inline.id='streamMinutesInlineWrap';
+        inline.style.cssText='position:relative;width:100%;min-width:0';
+        hoursInput.parentNode.insertBefore(inline,hoursInput);
+        inline.appendChild(hoursInput);
+      }
+      hoursInput.style.setProperty('box-sizing','border-box');
+      hoursInput.style.setProperty('width','100%');
+      hoursInput.style.setProperty('padding-right','min(43%, 180px)','important');
+      let hint=document.getElementById('streamMinutesPreview');
+      if(!hint){
+        hint=document.createElement('span');
+        hint.id='streamMinutesPreview';
+        hint.style.cssText='position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#d8b8ff;font:600 13px Montserrat,Arial,sans-serif;white-space:nowrap;pointer-events:none;max-width:42%;text-align:right;overflow:hidden;text-overflow:ellipsis';
+        inline.appendChild(hint);
         hoursInput.addEventListener('input',()=>{
           const v=hoursInput.value.trim();
-          hint.textContent=v===''||v==='-'?'':('Converts to '+formatHours(parseHoursValue(v)));
+          const valid=v==='-'||v===''||((/^\\d+(?:\\.\\d+)?$/.test(v))&&Number.isFinite(Number(v)));
+          hint.textContent=valid&&v!==''&&v!=='-'?'≈ '+formatHours(parseHoursValue(v)):'';
         });
       }
     }
