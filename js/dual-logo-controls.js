@@ -19,9 +19,19 @@
     });
   }
 
+  function applyHeroLogo(url){
+    if(!url)return;
+    document.querySelectorAll('.logo-wrap img').forEach(img=>{
+      img.src=url;
+      img.style.transform='scale(1)';
+      img.style.transformOrigin='center center';
+      img.style.transition='none';
+    });
+  }
+
   function applyState(){
     applyLogo('.brand img',state.header_logo_url,state.header_logo_scale);
-    applyLogo('.logo-wrap img',state.hero_logo_url,state.hero_logo_scale);
+    applyHeroLogo(state.hero_logo_url);
     updatePreview('header');
     updatePreview('hero');
   }
