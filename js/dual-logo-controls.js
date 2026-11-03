@@ -19,19 +19,11 @@
     });
   }
 
-  function applyHeroLogo(url){
-    if(!url)return;
-    document.querySelectorAll('.logo-wrap img').forEach(img=>{
-      img.src=url;
-      img.style.transform='scale(1)';
-      img.style.transformOrigin='center center';
-      img.style.transition='none';
-    });
-  }
-
   function applyState(){
     applyLogo('.brand img',state.header_logo_url,state.header_logo_scale);
-    applyHeroLogo(state.hero_logo_url);
+    // Keep the Home hero on the original local image already present in index.html.
+    // The cloud-saved hero image has transparent padding and visually shrinks after load.
+    // Do not replace .logo-wrap img at runtime.
     updatePreview('header');
     updatePreview('hero');
   }
@@ -73,7 +65,6 @@
   }
 
   function card(kind,title,help){
-    const cap=kind==='header'?'Header':'Hero';
     return `<section class="dual-logo-card" data-logo-kind="${kind}"><h3>${title}</h3><p>${help}</p><input id="${kind}LogoFile" type="file" accept="image/*"><div class="dual-logo-preview-shell"><img id="${kind}LogoPreview" alt="${title} preview"></div><div class="dual-logo-zoom"><button type="button" id="${kind}LogoZoomOut" aria-label="Zoom out ${title}">−</button><input id="${kind}LogoZoom" type="range" min="0.45" max="1.8" step="0.05" value="1" aria-label="${title} zoom"><button type="button" id="${kind}LogoZoomIn" aria-label="Zoom in ${title}">+</button></div><div class="dual-logo-value"><span id="${kind}LogoZoomValue">100%</span></div></section>`;
   }
 
@@ -154,7 +145,6 @@
       const r=await fetch(`${API}/rest/v1/site_content?id=eq.1`,{method:'PATCH',headers:{apikey:KEY,Authorization:`Bearer ${token}`,'Content-Type':'application/json',Prefer:'return=minimal'},body:JSON.stringify(payload)});
       if(!r.ok)throw new Error(await r.text());
       applyState();
-      setTimeout(applyState,900);
     }catch(err){console.error('[Twin Arc] separate logo save failed',err);if(status)status.textContent=err.message||'Could not save separate logos.';}
   }
 
