@@ -66,9 +66,12 @@
     }
   }
 
+  // Generic branding updater intentionally excludes the Home hero logo.
+  // The Home/Main logo is managed separately so cloud content loading cannot
+  // replace or visually resize the hero image after first paint.
   function applyLogo(url){
     const src=url||DEFAULT_LOGO;
-    document.querySelectorAll('.brand img,.logo-wrap img,.agency-logo-side img,footer img').forEach(img=>{img.src=src;});
+    document.querySelectorAll('.brand img,.agency-logo-side img,footer img').forEach(img=>{img.src=src;});
     document.documentElement.style.setProperty('--site-brand-logo',`url("${String(src).replace(/"/g,'\\"')}")`);
     const preview=$('siteLogoPreview');if(preview)preview.src=src;
   }
@@ -110,7 +113,6 @@
     for(let i=1;i<=3;i++){set(`editAboutCard${i}Title`,d[`about_card${i}_title`]);set(`editAboutCard${i}Copy`,d[`about_card${i}_copy`]);}
     $('siteLogoFile').value='';applyLogo(d.logo_url);
   }
-
   function openEditor(section){
     if(!ownerUnlocked())return;
     buildModal();fillEditor();
