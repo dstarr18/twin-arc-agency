@@ -3,6 +3,7 @@
 // after browser Back/history navigation.
 (function(){
   let busy=false;
+  let lastHandledAt=0;
 
   function isMobile(){
     return window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
@@ -165,27 +166,35 @@
     const btn=visibleSalaryButton();if(!btn)return false;
     const rect=btn.getBoundingClientRect();
     if(rect.width<=0||rect.height<=0||!pointInside(rect,x,y))return false;
-    e.preventDefault();e.stopImmediatePropagation();
+
+    e.preventDefault();
+    e.stopImmediatePropagation();
+
+    const now=Date.now();
+    if(now-lastHandledAt<700)return true;
+    lastHandledAt=now;
+
     const hiding=(btn.textContent||'').includes('HIDE');
     if(hiding)maskRow();else openModal();
     return true;
   }
 
-  // One touch path handles the action itself.
-  if(window.PointerEvent){
-    document.addEventListener('pointerup',function(e){
-      if(e.pointerType!=='touch')return;
-      handleSalaryTap(e,e.clientX,e.clientY);
-    },{capture:true,passive:false});
-  }else{
-    document.addEventListener('touchend',function(e){
-      if(!e.changedTouches||e.changedTouches.length!==1)return;
-      const t=e.changedTouches[0];handleSalaryTap(e,t.clientX,t.clientY);
-    },{capture:true,passive:false});
-  }
+  // Intercept BOTH touchend and pointerup at document capture level. iPhone can fire
+  // the legacy target touchend before a pointer-only fallback gets a chance to stop it.
+  // A short duplicate guard means only the first mobile event performs the action.
+  document.addEventListener('touchend',function(e){
+    if(!e.changedTouches||e.changedTouches.length!==1)return;
+    const t=e.changedTouches[0];
+    handleSalaryTap(e,t.clientX,t.clientY);
+  },{capture:true,passive:false});
 
-  // iPhone also synthesizes a click after the touch/pointer event. Block that click
-  // on the salary button so the legacy weekly-salary.js handler cannot open window.prompt().
+  document.addEventListener('pointerup',function(e){
+    if(e.pointerType!=='touch')return;
+    handleSalaryTap(e,e.clientX,e.clientY);
+  },{capture:true,passive:false});
+
+  // Safari may synthesize a click afterward. Block it so weekly-salary.js cannot
+  // reach its legacy window.prompt() code path.
   document.addEventListener('click',function(e){
     if(!isMobile())return;
     const btn=e.target?.closest?.('[data-toggle-all-salaries]');
@@ -196,6 +205,7 @@
 
   function cleanupAfterNavigation(){
     closeModal();
+    lastHandledAt=0;
     setTimeout(maskRow,160);
   }
   window.addEventListener('pageshow',cleanupAfterNavigation);
