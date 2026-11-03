@@ -11,7 +11,12 @@
     const r=btn.getBoundingClientRect();if(r.width<=0||r.height<=0||!inside(r,x,y))return false;
     e.preventDefault();e.stopImmediatePropagation();
     const now=Date.now();if(now-lastHandledAt<800)return true;lastHandledAt=now;
-    if(typeof window.__twinArcMobileSalaryToggle==='function')window.__twinArcMobileSalaryToggle();
+    const hiding=(btn.textContent||'').includes('HIDE') || (typeof window.__twinArcSalaryIsRevealed==='function'&&window.__twinArcSalaryIsRevealed());
+    if(hiding){
+      if(typeof window.__twinArcMobileSalaryHide==='function')window.__twinArcMobileSalaryHide();
+    }else{
+      if(typeof window.__twinArcMobileSalaryView==='function')window.__twinArcMobileSalaryView();
+    }
     return true;
   }
   document.addEventListener('touchend',e=>{if(!e.changedTouches||e.changedTouches.length!==1)return;const t=e.changedTouches[0];handle(e,t.clientX,t.clientY);},{capture:true,passive:false});
