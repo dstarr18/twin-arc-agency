@@ -6,6 +6,7 @@
   let salariesRevealed=false;
   let revealedSalaryValues={};
   let lastSalaryToggleAt=0;
+  let revealedHostId=null;
 
   function moneyNumber(value){
     const raw=String(value??'').trim().replace(/,/g,'').replace(/[^0-9.+-]/g,'');
@@ -18,6 +19,16 @@
     const n=Number(value);
     if(value===null||value===undefined||value===''||!Number.isFinite(n))return '-';
     return '₱'+n.toLocaleString('en-PH',{minimumFractionDigits:0,maximumFractionDigits:2});
+  }
+
+  function currentHostId(){
+    try{return (typeof currentPerfHost!=='undefined'&&currentPerfHost>=0&&hosts?.[currentPerfHost]?.id)?String(hosts[currentPerfHost].id):null;}catch(_){return null;}
+  }
+
+  function resetSalaryReveal(){
+    salariesRevealed=false;
+    revealedSalaryValues={};
+    revealedHostId=null;
   }
 
   function ensureStyles(){
@@ -131,6 +142,8 @@
     const myVersion=++salaryRenderVersion;
     const body=document.getElementById('quotaBody');
     if(!body)return;
+    const hostId=currentHostId();
+    if(revealedHostId&&hostId!==revealedHostId)resetSalaryReveal();
     if(myVersion!==salaryRenderVersion||!document.body.contains(body))return;
     body.querySelectorAll('.weekly-salary-row').forEach(el=>el.remove());
     const d=(typeof getHostData==='function'&&typeof currentPerfHost!=='undefined'&&currentPerfHost>=0)?getHostData():{records:{}};
@@ -159,14 +172,15 @@
   async function unlockAllSalaries(button){
     try{
       if(typeof currentPerfHost==='undefined'||currentPerfHost<0||!hosts?.[currentPerfHost]?.id)return;
+      const host=hosts[currentPerfHost];
+      const hostId=String(host.id);
+      if(revealedHostId&&revealedHostId!==hostId)resetSalaryReveal();
       if(salariesRevealed){
-        salariesRevealed=false;
-        revealedSalaryValues={};
+        resetSalaryReveal();
         renderPrivateSalaryRow();
         return;
       }
 
-      const host=hosts[currentPerfHost];
       const d=(typeof getHostData==='function')?getHostData():{records:{}};
       const slots=[0,1,2,3,4].filter(i=>!!d.records?.['slot'+i]);
       if(!slots.length){alert('No weekly salary records are available yet.');return;}
@@ -197,6 +211,7 @@
 
       revealedSalaryValues=values;
       salariesRevealed=true;
+      revealedHostId=hostId;
       renderPrivateSalaryRow();
     }catch(err){
       console.warn('[Twin Arc] Salary PIN verification failed.',err);
@@ -229,8 +244,7 @@
     const originalRenderQuotaSheet=renderQuotaSheet;
     renderQuotaSheet=function(){
       originalRenderQuotaSheet();
-      salariesRevealed=false;
-      revealedSalaryValues={};
+      resetSalaryReveal();
       renderPrivateSalaryRow();
     };
   }
@@ -246,15 +260,28 @@
     unlockAllSalaries(btn);
   }
 
-  const quota=document.getElementById('quotaSheet');
-  if(quota){
-    if(window.PointerEvent){
-      quota.addEventListener('pointerup',handleSalaryToggleEvent,true);
-    }else{
-      quota.addEventListener('touchend',handleSalaryToggleEvent,{capture:true,passive:false});
-    }
-    quota.addEventListener('click',handleSalaryToggleEvent,true);
+  // Delegate from document so the salary lock survives mobile back/forward navigation
+  // and any dashboard/table DOM replacement.
+  if(window.PointerEvent){
+    document.addEventListener('pointerup',handleSalaryToggleEvent,true);
+  }else{
+    document.addEventListener('touchend',handleSalaryToggleEvent,{capture:true,passive:false});
   }
+  document.addEventListener('click',handleSalaryToggleEvent,true);
+
+  function refreshSalaryAfterNavigation(){
+    resetSalaryReveal();
+    setTimeout(()=>{ensureSalaryField();renderPrivateSalaryRow();},80);
+    setTimeout(renderPrivateSalaryRow,320);
+  }
+  window.addEventListener('popstate',refreshSalaryAfterNavigation);
+  window.addEventListener('pageshow',e=>{if(e.persisted)refreshSalaryAfterNavigation();});
+
+  const pageObserver=new MutationObserver(()=>{
+    const body=document.getElementById('quotaBody');
+    if(body&&!body.querySelector('.weekly-salary-row'))renderPrivateSalaryRow();
+  });
+  pageObserver.observe(document.body,{childList:true,subtree:true});
 
   const form=document.getElementById('weeklyRecordForm');
   if(form){
