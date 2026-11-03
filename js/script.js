@@ -44,7 +44,7 @@
     const securityCss=document.createElement('link');securityCss.rel='stylesheet';securityCss.href='css/owner-security.css';securityCss.setAttribute('data-twin-arc-owner-security','true');document.head.appendChild(securityCss);
   }
   if(!document.querySelector('link[data-twin-arc-home-logo-stability]')){
-    const heroCss=document.createElement('link');heroCss.rel='stylesheet';heroCss.href='css/home-logo-stability.css?v=20261102f';heroCss.setAttribute('data-twin-arc-home-logo-stability','true');document.head.appendChild(heroCss);
+    const heroCss=document.createElement('link');heroCss.rel='stylesheet';heroCss.href='css/home-logo-stability.css?v=20261102g';heroCss.setAttribute('data-twin-arc-home-logo-stability','true');document.head.appendChild(heroCss);
   }
   try{
     const nativeSetItem=Storage.prototype.setItem;
