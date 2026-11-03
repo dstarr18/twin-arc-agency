@@ -15,6 +15,9 @@
   if(!document.querySelector('link[data-twin-arc-owner-security]')){
     const securityCss=document.createElement('link');securityCss.rel='stylesheet';securityCss.href='css/owner-security.css';securityCss.setAttribute('data-twin-arc-owner-security','true');document.head.appendChild(securityCss);
   }
+  if(!document.querySelector('link[data-twin-arc-home-logo-stability]')){
+    const heroCss=document.createElement('link');heroCss.rel='stylesheet';heroCss.href='css/home-logo-stability.css?v=20261102a';heroCss.setAttribute('data-twin-arc-home-logo-stability','true');document.head.appendChild(heroCss);
+  }
   try{
     const nativeSetItem=Storage.prototype.setItem;
     if(!window.__twinArcHostCacheGuard){
