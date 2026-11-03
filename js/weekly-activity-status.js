@@ -67,10 +67,11 @@
         inline.appendChild(hint);
         hoursInput.addEventListener('input',()=>{
           const v=hoursInput.value.trim();
-          const valid=v==='-'||v===''||((/^\\d+(?:\\.\\d+)?$/.test(v))&&Number.isFinite(Number(v)));
+          const valid=v==='-'||v===''||((/^\d+(?:\.\d+)?$/.test(v))&&Number.isFinite(Number(v)));
           hint.textContent=valid&&v!==''&&v!=='-'?'≈ '+formatHours(parseHoursValue(v)):'';
         });
       }
+      hoursInput.dispatchEvent(new Event('input',{bubbles:false}));
     }
     if(!document.getElementById('weeklyActivityStatus')){const grid=form.querySelector('.manager-grid');if(grid){const label=document.createElement('label');label.innerHTML='Weekly Activity Status<select id="weeklyActivityStatus"><option value="Active">Active</option><option value="Inactive">Inactive</option></select>';const notes=grid.querySelector('label.full');if(notes)grid.insertBefore(label,notes);else grid.appendChild(label);}}
   }
