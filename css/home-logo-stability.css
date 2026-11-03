@@ -1,17 +1,40 @@
-/* Keep the Home hero logo/content fixed in place during reveal.
-   The existing reveal animation moves the entire hero by 22px, which looks like
-   a logo resize/jump on iPhone while the page is painting. Use fade-only here. */
+/* Keep the Home hero logo large and fixed from first paint.
+   Override the smaller base/mobile sizes so the logo never shrinks after load. */
 .hero-content.reveal{
   transform:none !important;
-  transition:opacity .32s ease !important;
+  transition:opacity .25s ease !important;
   will-change:opacity;
 }
 .hero-content.reveal.visible{
   transform:none !important;
 }
-.hero .logo-wrap,
-.hero .logo-wrap img{
+.hero .logo-wrap{
+  width:min(520px,92vw) !important;
+  height:330px !important;
+  min-height:330px !important;
   transform:none !important;
+  transition:none !important;
+}
+.hero .logo-wrap img{
+  width:100% !important;
+  height:100% !important;
+  object-fit:contain !important;
+  transform:none !important;
+  transition:none !important;
+}
+@media(max-width:800px){
+  .hero .logo-wrap{
+    width:92vw !important;
+    height:300px !important;
+    min-height:300px !important;
+  }
+}
+@media(max-width:430px){
+  .hero .logo-wrap{
+    width:94vw !important;
+    height:285px !important;
+    min-height:285px !important;
+  }
 }
 @media (prefers-reduced-motion: reduce){
   .hero-content.reveal{transition:none !important;}
