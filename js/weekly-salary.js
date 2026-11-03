@@ -7,6 +7,7 @@
   let revealedSalaryValues={};
   let revealedHostId=null;
   let salaryBusy=false;
+  let suppressUnlockUntil=0;
 
   function isMobile(){return window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;}
 
@@ -31,6 +32,15 @@
     salariesRevealed=false;
     revealedSalaryValues={};
     revealedHostId=null;
+  }
+
+  function hideSalaries(){
+    resetSalaryReveal();
+    salaryBusy=false;
+    suppressUnlockUntil=Date.now()+1200;
+    const modal=document.getElementById('salaryPinModal');
+    if(modal)modal.hidden=true;
+    renderPrivateSalaryRow();
   }
 
   function ensureStyles(){
@@ -156,8 +166,8 @@
   function bindSalaryButton(scope){
     const btn=scope?.querySelector?.('[data-toggle-all-salaries]');if(!btn||btn.dataset.salaryBound==='1')return;
     btn.dataset.salaryBound='1';let lastTouchAt=0;
-    btn.addEventListener('touchend',function(e){lastTouchAt=Date.now();e.preventDefault();e.stopPropagation();unlockAllSalaries(btn);},{passive:false});
-    btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(Date.now()-lastTouchAt<800)return;unlockAllSalaries(btn);});
+    btn.addEventListener('touchend',function(e){lastTouchAt=Date.now();e.preventDefault();e.stopPropagation();if(salariesRevealed)hideSalaries();else unlockAllSalaries(btn);},{passive:false});
+    btn.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(Date.now()-lastTouchAt<800)return;if(salariesRevealed)hideSalaries();else unlockAllSalaries(btn);});
   }
 
   function renderPrivateSalaryRow(){
@@ -177,12 +187,12 @@
   }
 
   async function unlockAllSalaries(button){
-    if(salaryBusy)return;
+    if(salaryBusy||Date.now()<suppressUnlockUntil)return;
     try{
       if(typeof currentPerfHost==='undefined'||currentPerfHost<0||!hosts?.[currentPerfHost]?.id)return;
       const host=hosts[currentPerfHost];const hostId=String(host.id);
       if(revealedHostId&&revealedHostId!==hostId)resetSalaryReveal();
-      if(salariesRevealed){resetSalaryReveal();renderPrivateSalaryRow();return;}
+      if(salariesRevealed){hideSalaries();return;}
       const d=(typeof getHostData==='function')?getHostData():{records:{}};const slots=[0,1,2,3,4].filter(i=>!!d.records?.['slot'+i]);
       if(!slots.length){alert('No weekly salary records are available yet.');return;}
       salaryBusy=true;
@@ -200,7 +210,9 @@
     }catch(err){salaryBusy=false;console.warn('[Twin Arc] Salary PIN verification failed.',err);alert('Could not verify the PIN right now.');renderPrivateSalaryRow();}
   }
 
-  window.__twinArcMobileSalaryToggle=function(){const btn=document.querySelector('#performance [data-toggle-all-salaries]');if(btn)unlockAllSalaries(btn);};
+  window.__twinArcMobileSalaryView=function(){const btn=document.querySelector('#performance [data-toggle-all-salaries]');if(btn)unlockAllSalaries(btn);};
+  window.__twinArcMobileSalaryHide=function(){if(salariesRevealed)hideSalaries();};
+  window.__twinArcSalaryIsRevealed=function(){return salariesRevealed;};
 
   window.fetch=async function(input,init){try{const url=typeof input==='string'?input:(input?.url||'');if(url.includes('/rest/v1/host_weekly_records')&&String(init?.method||'GET').toUpperCase()==='POST'&&init?.body){const payload=JSON.parse(init.body);const salaryEl=document.getElementById('weeklySalary');payload[SALARY_FIELD]=salaryEl?moneyNumber(salaryEl.value):null;init={...init,body:JSON.stringify(payload)};}}catch(err){console.warn('[Twin Arc] Weekly salary save patch skipped.',err);}return previousFetch(input,init);};
 
@@ -208,7 +220,7 @@
   if(typeof openWeekEditor==='function'){const originalOpenWeekEditor=openWeekEditor;openWeekEditor=function(i){originalOpenWeekEditor(i);ensureSalaryField();loadSalaryForOpenWeek();};}
   if(typeof renderQuotaSheet==='function'){const originalRenderQuotaSheet=renderQuotaSheet;renderQuotaSheet=function(){originalRenderQuotaSheet();const hostId=currentHostId();if(revealedHostId&&revealedHostId!==hostId)resetSalaryReveal();renderPrivateSalaryRow();};}
 
-  function refreshSalaryAfterNavigation(){salaryBusy=false;resetSalaryReveal();const modal=document.getElementById('salaryPinModal');if(modal)modal.hidden=true;setTimeout(()=>{ensureSalaryField();renderPrivateSalaryRow();},80);setTimeout(renderPrivateSalaryRow,320);}
+  function refreshSalaryAfterNavigation(){salaryBusy=false;const hostId=currentHostId();if(revealedHostId&&revealedHostId!==hostId)resetSalaryReveal();const modal=document.getElementById('salaryPinModal');if(modal)modal.hidden=true;setTimeout(()=>{ensureSalaryField();renderPrivateSalaryRow();},80);setTimeout(renderPrivateSalaryRow,320);}
   window.addEventListener('popstate',refreshSalaryAfterNavigation);window.addEventListener('pageshow',e=>{if(e.persisted)refreshSalaryAfterNavigation();});window.addEventListener('hashchange',()=>setTimeout(refreshSalaryAfterNavigation,30));
 
   const pageObserver=new MutationObserver(()=>{const body=document.getElementById('quotaBody');if(body&&!body.querySelector('.weekly-salary-row'))renderPrivateSalaryRow();});pageObserver.observe(document.body,{childList:true,subtree:true});
