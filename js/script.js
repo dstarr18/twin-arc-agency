@@ -1,16 +1,21 @@
 // Twin Arc Preview loader: approved V11 source + cloud host persistence + verified cloud events.
 (function(){
-  // Finalize the header brand immediately so mobile never sees the local-logo / one-line
-  // placeholder change later when cloud/editor scripts finish loading.
+  // Finalize the header brand immediately. Use the last locally saved owner setting
+  // when available, otherwise use the current cloud-approved header logo/scale.
   try{
     const brand=document.querySelector('.brand');
     if(brand){
       const img=brand.querySelector('img');
       if(img){
-        img.src='https://uhcfsdsdlqcqadkhlzkg.supabase.co/storage/v1/object/public/site-branding/agency-logo-1793499279553.png';
-        img.style.transform='scale(1)';
+        let initial={url:'https://uhcfsdsdlqcqadkhlzkg.supabase.co/storage/v1/object/public/site-branding/header-logo-1793683421226-3i6lmn.png',scale:1.2};
+        try{
+          const cached=JSON.parse(localStorage.getItem('twinArcHeaderLogoState')||'null');
+          if(cached&&cached.url)initial={url:cached.url,scale:Math.min(1.8,Math.max(.45,Number(cached.scale)||1))};
+        }catch(_){ }
+        img.src=initial.url;
+        img.style.transform=`scale(${initial.scale})`;
         img.style.transformOrigin='center center';
-        img.style.transition='none';
+        img.style.setProperty('transition','none','important');
       }
       let copy=brand.querySelector('.brand-copy');
       if(!copy){
@@ -39,7 +44,7 @@
     const securityCss=document.createElement('link');securityCss.rel='stylesheet';securityCss.href='css/owner-security.css';securityCss.setAttribute('data-twin-arc-owner-security','true');document.head.appendChild(securityCss);
   }
   if(!document.querySelector('link[data-twin-arc-home-logo-stability]')){
-    const heroCss=document.createElement('link');heroCss.rel='stylesheet';heroCss.href='css/home-logo-stability.css?v=20261102e';heroCss.setAttribute('data-twin-arc-home-logo-stability','true');document.head.appendChild(heroCss);
+    const heroCss=document.createElement('link');heroCss.rel='stylesheet';heroCss.href='css/home-logo-stability.css?v=20261102f';heroCss.setAttribute('data-twin-arc-home-logo-stability','true');document.head.appendChild(heroCss);
   }
   try{
     const nativeSetItem=Storage.prototype.setItem;
@@ -77,7 +82,7 @@
     load('js/dashboard-navigation-fix.js?v=20261102c');
     load('js/host-persistence-patch.js',()=>{
       installCloudDelete();
-      load('js/weekly-activity-status.js',()=>load('js/weekly-salary.js?v=20261102i',()=>load('js/cloud-events.js',()=>load('js/live-highlights.js',()=>load('js/editable-site-content.js?v=20261102b',()=>load('js/dual-logo-controls.js?v=20261102c'))))));
+      load('js/weekly-activity-status.js',()=>load('js/weekly-salary.js?v=20261102i',()=>load('js/cloud-events.js',()=>load('js/live-highlights.js',()=>load('js/editable-site-content.js?v=20261102b',()=>load('js/dual-logo-controls.js?v=20261102d'))))));
     });
   });
 })();
