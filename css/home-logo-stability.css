@@ -8,11 +8,12 @@
   transform:none !important;
 }
 
-/* Home hero logo: fixed, clean mobile size with no load-time zoom. */
+/* Home hero logo: stable container; uploaded logo may use the saved owner zoom. */
 .hero .logo-wrap{
   width:min(440px,80vw) !important;
   height:260px !important;
   min-height:260px !important;
+  overflow:visible !important;
   transform:none !important;
   transition:none !important;
 }
@@ -20,7 +21,6 @@
   width:100% !important;
   height:100% !important;
   object-fit:contain !important;
-  transform:none !important;
   transform-origin:center center !important;
   transition:none !important;
 }
