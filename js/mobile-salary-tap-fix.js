@@ -4,6 +4,10 @@
 (function(){
   let busy=false;
 
+  function isMobile(){
+    return window.matchMedia('(max-width: 900px), (pointer: coarse)').matches;
+  }
+
   function visibleSalaryButton(){
     const performance=document.getElementById('performance');
     if(!performance||performance.hidden)return null;
@@ -157,6 +161,7 @@
   }
 
   function handleSalaryTap(e,x,y){
+    if(!isMobile())return false;
     const btn=visibleSalaryButton();if(!btn)return false;
     const rect=btn.getBoundingClientRect();
     if(rect.width<=0||rect.height<=0||!pointInside(rect,x,y))return false;
@@ -166,9 +171,7 @@
     return true;
   }
 
-  // Use exactly one mobile event path. iPhone Safari can emit both touchend and
-  // pointerup for the same physical tap; handling both caused HIDE to immediately
-  // become VIEW and reopen the PIN modal on the duplicate event.
+  // One touch path handles the action itself.
   if(window.PointerEvent){
     document.addEventListener('pointerup',function(e){
       if(e.pointerType!=='touch')return;
@@ -180,6 +183,16 @@
       const t=e.changedTouches[0];handleSalaryTap(e,t.clientX,t.clientY);
     },{capture:true,passive:false});
   }
+
+  // iPhone also synthesizes a click after the touch/pointer event. Block that click
+  // on the salary button so the legacy weekly-salary.js handler cannot open window.prompt().
+  document.addEventListener('click',function(e){
+    if(!isMobile())return;
+    const btn=e.target?.closest?.('[data-toggle-all-salaries]');
+    if(!btn)return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+  },true);
 
   function cleanupAfterNavigation(){
     closeModal();
