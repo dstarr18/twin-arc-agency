@@ -59,11 +59,13 @@
       hoursInput.style.setProperty('box-sizing','border-box');
       hoursInput.style.setProperty('width','100%');
       hoursInput.style.setProperty('padding-right','min(43%, 180px)','important');
+      hoursInput.style.setProperty('font-size','16px'); // Avoid iOS Safari zoom on focus.
       let hint=document.getElementById('streamMinutesPreview');
       if(!hint){
         hint=document.createElement('span');
         hint.id='streamMinutesPreview';
         hint.style.cssText='position:absolute;right:14px;top:50%;transform:translateY(-50%);color:#d8b8ff;font:600 13px Montserrat,Arial,sans-serif;white-space:nowrap;pointer-events:none;max-width:42%;text-align:right;overflow:hidden;text-overflow:ellipsis';
+        hint.setAttribute('aria-live','polite');
         inline.appendChild(hint);
         hoursInput.addEventListener('input',()=>{
           const v=hoursInput.value.trim();
